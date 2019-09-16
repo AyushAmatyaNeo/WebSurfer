@@ -1034,8 +1034,10 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                   ACC_EDESC,
                   TRANSACTION_TYPE
                 FROM FA_CHART_OF_ACCOUNTS_SETUP
-                WHERE ACC_NATURE  = 'AC'
-                AND COMPANY_CODE  = '{$companyCode}'
+                WHERE 
+                -- ACC_NATURE  = 'AC' 
+                -- AND 
+                COMPANY_CODE  = '{$companyCode}'
                 AND DELETED_FLAG  = 'N'
                 AND ACC_TYPE_FLAG = 'T'";
             return $this->rawQuery($sql);
