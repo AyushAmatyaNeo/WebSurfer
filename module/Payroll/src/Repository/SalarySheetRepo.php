@@ -105,7 +105,8 @@ AND GROUP_ID IN ({$group})";
     
     public function fetchGeneratedSheetByGroup($monthId,$group,$salaryTypeId){
         $sql="select 
-                ss.sheet_no,ssg.Group_Name,Mc.Month_Edesc,St.Salary_Type_Name 
+                ss.sheet_no,ssg.Group_Name,Mc.Month_Edesc,St.Salary_Type_Name,
+                ss.approved, ss.locked 
                 from HRIS_SALARY_SHEET ss 
                 join hris_salary_sheet_group ssg on (ssg.group_id=ss.group_id)
                 join Hris_Month_Code mc on (mc.month_id=ss.month_id)
@@ -115,14 +116,16 @@ AND GROUP_ID IN ({$group})";
         return $data;
     }
     
-    public function insertPayrollEmp($empList,$monthId) {
+    public function insertPayrollEmp($empList,$monthId,$salaryTypeId) {
         $deleteSql = "delete from HRIS_PAYROLL_EMP_LIST";
         $this->executeStatement($deleteSql);
         foreach ($empList as $employeeId) {
 //            $tempSql = "INSERT INTO HRIS_PAYROLL_EMP_LIST VALUES ({$employeeId})";
             $tempSql = "INSERT INTO HRIS_PAYROLL_EMP_LIST 
                     select * from (select {$employeeId} as employee_id from dual) 
-where employee_id not in (select employee_id from Hris_Salary_Sheet_Emp_Detail where month_id={$monthId})";
+where employee_id not in (select employee_id from Hris_Salary_Sheet_Emp_Detail ssed
+join HRIS_SALARY_SHEET ss on (ss.SHEET_NO=ssed.SHEET_NO)
+where ss.month_id={$monthId} and ss.SALARY_TYPE_ID={$salaryTypeId})";
             $this->executeStatement($tempSql);
         }
         $toGenerateGroupSql="select  distinct group_id 
@@ -146,4 +149,23 @@ where employee_id not in (select employee_id from Hris_Salary_Sheet_Emp_Detail w
         return true;
     }
 
+    public function bulkApproveLock($sheetNo, $col, $val){
+        $sql = "UPDATE HRIS_SALARY_SHEET set $col = '$val' where sheet_no={$sheetNo}";
+        $this->executeStatement($sql);
+        return true;
+    }
+
+    public function checkApproveLock($sheetNo){
+        $sql = "SELECT SHEET_NO, APPROVED, LOCKED FROM HRIS_SALARY_SHEET WHERE SHEET_NO = $sheetNo";
+        $data = $this->rawQuery($sql);
+        return Helper::extractDbData($data);
+    }
+    
+    public function fetchSheetWiseEmployeeList($sheetNo){
+        $sql = "select SS.SHEET_NO,SS.MONTH_ID,SS.SALARY_TYPE_ID,SSED.EMPLOYEE_ID from HRIS_SALARY_SHEET SS
+JOIN HRIS_SALARY_SHEET_EMP_DETAIL SSED ON (SS.SHEET_NO=SSED.SHEET_NO)
+where SS.SHEET_NO={$sheetNo}";
+        $data = $this->rawQuery($sql);
+        return Helper::extractDbData($data);
+    }
 }

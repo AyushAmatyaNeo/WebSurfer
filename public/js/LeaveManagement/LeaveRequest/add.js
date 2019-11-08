@@ -17,6 +17,7 @@
         var $startDate = $('#startDate'), $endDate = $('#endDate');
         var $leaveSubstitute = $('#leaveSubstitute');
         var $subRefId = $('#subRefId');
+        var $halfDayMsg = $('#halfDayMsg');
 
         var substituteDetails = [];
 
@@ -26,7 +27,8 @@
         var rowCount = "";
         var requireDocument = "";
         var leaveName = "";
-
+        
+        var applyLimit;
         var substituteEmp = {
             list: [],
             disable: function (employeeIds) {
@@ -71,13 +73,17 @@
 
                 $noOfDays.val(dateDiff);
                 var balanceDiff = dateDiff / (halfDay === 'N' ? 1 : 2);
-
+                
                 if (balanceDiff > availableDays) {
                     $errorMsg.html("* Applied days can't be more than available days.");
                     $request.prop("disabled", true);
                 } else if (balanceDiff === 0) {
                     $errorMsg.html("* Applied days can't be 0 day.");
                     $request.prop("disabled", true);
+                } else if (applyLimit!=null  && applyLimit < balanceDiff) {
+                    $errorMsg.html("* Cant be Applied More than ".applyLimit);
+                    $request.prop("disabled", true);
+                    app.showMessage(" Cant be Applied More than "+applyLimit+" days" , "warning");
                 } else {
                     $errorMsg.html("");
                     $request.prop("disabled", false);
@@ -205,6 +211,7 @@
             }).then(function (success) {
                 App.unblockUI("#hris-page-content");
                 var leaveDetail = success.data;
+                applyLimit = leaveDetail.APPLY_LIMIT;
                 substituteDetails = success.subtituteDetails;
 //                app.populateSelect($leave, substituteDetails, 'id', 'name', 'Select a Leave', null, null, false);
                 app.populateSelect($subRefId, substituteDetails, 'ID', 'SUB_NAME', 'Select Substitute Date ', ' ', $subRefId.val(), false);
@@ -249,6 +256,7 @@
                 if(requireDocument == 'Y' && dateDiff1 > daysForDocs && rowCount1 <= 1 ){
                     $($request).attr('disabled', 'disabled');
                 }
+                checkHalfDay(this);
             }, function (failure) {
                 App.unblockUI("#hris-page-content");
                 console.log(failure);
@@ -259,9 +267,11 @@
             leaveChange(this);
         });
 
-
+        
 
         var employeeChange = function (obj) {
+            checkHalfDay(this);
+            
             var $this = $(obj);
             app.floatingProfile.setDataFromRemote($this.val());
             App.blockUI({target: "#hris-page-content", message: "Fetching Employee Leaves"});
@@ -286,14 +296,23 @@
         $employee.on('change', function () {
             employeeChange(this);
         });
+        
         $halfDay.on('change', function () {
+            checkHalfDay(this);
             if ($startDate.val() !== '' && $endDate.val() !== '') {
                 var halfDayValue = $halfDay.is(':visible') ? $halfDay.val() : 'N';
                 calculateAvailableDays($startDate.val(), $endDate.val(), halfDayValue, $employee.val(), $leave.val());
             }
         });
 
-
+        var checkHalfDay = function(obj){
+            $halfDayMsg.html("");
+            if ($startDate.val() !== '' && $endDate.val() !== '') {
+                var halfDayValue = $halfDay.is(':visible') ? $halfDay.val() : 'N';
+                if(halfDayValue != 'N'){
+                    $halfDayMsg.html("Actual Days: " + ($noOfDays.val())/2);
+                }
+        }};
 
         var myDropzone;
         Dropzone.autoDiscover = false;

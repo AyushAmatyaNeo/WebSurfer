@@ -177,7 +177,7 @@ class LeaveBalanceRepository {
 
     public function getPivotedList($searchQuery, $isMonthly = false) {
         $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId'], $searchQuery['genderId'], $searchQuery['locationId'], $searchQuery['functionalTypeId']);
-        $monthlyCondition = $isMonthly ? " AND FISCAL_YEAR_MONTH_NO ={$searchQuery['fiscalYearMonthNo']} " : "";
+        $monthlyCondition = $isMonthly ? " AND FISCAL_YEAR_MONTH_NO ={$searchQuery['leaveYearMonthNo']} " : "";
         $leaveArrayDb = $this->fetchLeaveAsDbArray($isMonthly);
 
         $sql = "
@@ -193,7 +193,7 @@ FROM (SELECT *
                     HA.TOTAL_DAYS AS TOTAL,
                     HA.BALANCE,
                     HS.ENCASH_DAYS as ENCASHED,
-                    ( ha.total_days + ha.previous_year_bal - ha.balance - (case when
+                    ( ha.total_days - ha.balance - (case when
                     HS.ENCASH_DAYS is null then 0 else HS.ENCASH_DAYS end)) AS taken
               FROM 
               HRIS_EMPLOYEE_LEAVE_ASSIGN HA
@@ -348,7 +348,7 @@ where LMS.STATUS = 'E' ";
         $searchCondition = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId']);
 
 
-        $sql = " SELECT E.EMPLOYEE_CODE, E.FULL_NAME, LMS.LEAVE_ENAME, ELA.*,
+        $sql = " SELECT E.EMPLOYEE_CODE, E.FULL_NAME, D.DEPARTMENT_NAME, B.BRANCH_NAME, LMS.LEAVE_ENAME, ELA.*,
   CASE
     WHEN ELA.WOD_ID IS NOT NULL
     THEN WD.FROM_DATE ||' - '|| WD.TO_DATE
@@ -372,6 +372,10 @@ LEFT JOIN HRIS_EMPLOYEES E
 ON (ELA.EMPLOYEE_ID = E.EMPLOYEE_ID)
 LEFT JOIN HRIS_LEAVE_MASTER_SETUP LMS
 ON (ELA.LEAVE_ID = LMS.LEAVE_ID)
+LEFT JOIN HRIS_DEPARTMENTS D
+ON (E.DEPARTMENT_ID = D.DEPARTMENT_ID)
+LEFT JOIN HRIS_BRANCHES B
+ON (E.BRANCH_ID = B.BRANCH_ID)
 where 1=1  {$leaveCondition} {$searchCondition} 
 ";
 

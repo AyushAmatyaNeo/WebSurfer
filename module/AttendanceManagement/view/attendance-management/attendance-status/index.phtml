@@ -76,12 +76,6 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                                 Export to PDF
                             </a>
                         </li>
-                        <li>
-                            <a href="javascript:;" id="export">
-                                <i class="fa fa-file-excel-o" ></i>
-                                Export to Excel
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -128,6 +122,11 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                 <div class="col-sm-2">
                     <label>Employee Type</label>
                     <select multiple class="form-control" name="employeeType" id="employeeTypeId">
+                    </select>
+                </div>
+                <div class="col-sm-2">
+                    <label>Functional Type</label>
+                    <select multiple class="form-control" name="functionalType" id="functionalTypeId">
                     </select>
                 </div>
                 <div class="col-sm-2">

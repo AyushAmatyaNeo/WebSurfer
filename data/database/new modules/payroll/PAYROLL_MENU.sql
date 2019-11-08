@@ -520,3 +520,177 @@ Parent_Menu=(select menu_id from hris_menus  where menu_name like 'Payroll Repor
     NULL,
     'Y'
   );
+
+INSERT INTO HRIS_MENUS (
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+) VALUES (
+    NULL,
+    (select max(MENU_ID)+1 from  HRIS_MENUS),
+    'SheetWise Delete/Regenerate',
+    (select menu_id from hris_menus where lower(menu_name)='salary'),
+    NULL,
+    'salarySheet',
+    'E',
+    TRUNC(sysdate),
+    NULL,
+    'fa fa-square-o',
+    'sheetWise',
+    5,
+    NULL,
+    NULL,
+    'Y'
+);
+
+
+INSERT INTO HRIS_MENUS (
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+) VALUES (
+    NULL,
+    (select max(MENU_ID)+1 from  HRIS_MENUS),
+    'Salary Sheet Lock',
+    (select menu_id from hris_menus where lower(menu_name)='salary'),
+    NULL,
+    'salarysheetlock',
+    'E',
+    trunc(sysdate),
+    NULL,
+    'fa fa-money',
+    'index',
+    2,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT INTO hris_menus (
+    menu_code,
+    menu_id,
+    menu_name,
+    parent_menu,
+    menu_description,
+    route,
+    status,
+    created_dt,
+    modified_dt,
+    icon_class,
+    action,
+    menu_index,
+    created_by,
+    modified_by,
+    is_visible
+) VALUES (
+    NULL,
+    (SELECT MAX(MENU_ID)+1 FROM HRIS_MENUS),
+    'Employee Wise Bulk Assign',
+    (select menu_id from hris_menus where lower(menu_name) like 'flat value' and parent_menu in (
+select menu_id from hris_menus where lower(menu_name) like 'payroll')),
+    NULL,
+    'flatValue',
+    'E',
+    trunc(sysdate),
+    null,
+    'fa fa-file-text-o',
+    'bulkDetail',
+    4,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT INTO hris_menus (
+    menu_code,
+    menu_id,
+    menu_name,
+    parent_menu,
+    menu_description,
+    route,
+    status,
+    created_dt,
+    modified_dt,
+    icon_class,
+    action,
+    menu_index,
+    created_by,
+    modified_by,
+    is_visible
+) VALUES (
+    NULL,
+    (SELECT MAX(MENU_ID)+1 FROM HRIS_MENUS),
+    'Position Wise Bulk Assign',
+    (select menu_id from hris_menus where lower(menu_name) like 'flat value' and parent_menu in (
+select menu_id from hris_menus where lower(menu_name) like 'payroll')),
+    NULL,
+    'flatValue',
+    'E',
+    trunc(sysdate),
+    null,
+    'fa fa-file-text-o',
+    'positionWiseFlatValue',
+    5,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT INTO hris_menus (
+    menu_code,
+    menu_id,
+    menu_name,
+    parent_menu,
+    menu_description,
+    route,
+    status,
+    created_dt,
+    modified_dt,
+    icon_class,
+    action,
+    menu_index,
+    created_by,
+    modified_by,
+    is_visible
+) VALUES (
+    NULL,
+    (SELECT MAX(MENU_ID)+1 FROM hris_menus),
+    'Excel Upload',
+    (select menu_id from hris_menus where lower(menu_name) like 'payroll' and parent_menu in (
+select menu_id from hris_menus where lower(menu_name) like 'hr' or lower(menu_name) like 'admin')),
+    NULL,
+    'excelUpload',
+    'E',
+    TO_DATE('22-OCT-19', 'DD-MON-RR'),
+    NULL,
+    'fa fa-star',
+    'index',
+    1,
+    NULL,
+    NULL,
+    'Y'
+);

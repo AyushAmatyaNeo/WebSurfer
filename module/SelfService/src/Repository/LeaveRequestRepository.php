@@ -112,6 +112,7 @@ class LeaveRequestRepository implements RepositoryInterface {
                   END AS IS_SUBSTITUTE_MANDATORY,
                   L.ENABLE_SUBSTITUTE       AS ENABLE_SUBSTITUTE
                   ,L.IS_SUBSTITUTE
+                  ,L.APPLY_LIMIT
                 FROM HRIS_EMPLOYEE_LEAVE_ASSIGN LA
                 INNER JOIN HRIS_LEAVE_MASTER_SETUP L
                 ON L.LEAVE_ID                =LA.LEAVE_ID
@@ -138,20 +139,25 @@ class LeaveRequestRepository implements RepositoryInterface {
                       )
                   END
                 OR LA.FISCAL_YEAR_MONTH_NO IS NULL ) 
-                AND {$date} BETWEEN LY.START_DATE AND LY.END_DATE";
+                AND {$date} < LY.END_DATE";
         $statement = $this->adapter->query($sql);
         return $statement->execute()->current();
     }
 
     //to get the leave list based on assigned employee id for select option
-    public function getLeaveList($employeeId) {
+    public function getLeaveList($employeeId, $selfRequest='N') {
+        $selfRequestCondition = "1=1";
+        if($selfRequest == 'Y'){
+            $selfRequestCondition = "L.HR_ONLY = 'N'";
+        }
         $sql = new Sql($this->adapter);
         $select = $sql->select();
         $select->from(['LA' => LeaveAssign::TABLE_NAME])
                 ->join(['L' => 'HRIS_LEAVE_MASTER_SETUP'], "L.LEAVE_ID=LA.LEAVE_ID", ['LEAVE_CODE', 'LEAVE_ENAME' => new Expression("INITCAP(L.LEAVE_ENAME)")]);
         $select->where([
             "L.STATUS='E'",
-            "LA.EMPLOYEE_ID=" . $employeeId
+            "LA.EMPLOYEE_ID=" . $employeeId,
+            $selfRequestCondition
         ]);
 
         $statement = $sql->prepareStatementForSqlObject($select);
@@ -183,7 +189,9 @@ class LeaveRequestRepository implements RepositoryInterface {
     public function delete($id) {
         $leaveStatus = $this->getLeaveFrontOrBack($id);
         $currentDate = Helper::getcurrentExpressionDate();
-        if ($leaveStatus['DATE_STATUS'] == 'BD' && $leaveStatus['LEAVE_STATUS'] == 'AP') {
+        if ($leaveStatus['DATE_STATUS'] != 'BD' && $leaveStatus['LEAVE_STATUS'] != 'AP') {
+            $this->tableGateway->update([LeaveApply::STATUS => 'C', LeaveApply::MODIFIED_DT => $currentDate], [LeaveApply::ID => $id]);
+        } else {
             $this->tableGateway->update([LeaveApply::STATUS => 'CP', LeaveApply::MODIFIED_DT => $currentDate], [LeaveApply::ID => $id]);
             EntityHelper::rawQueryResult($this->adapter, "
                    DECLARE
@@ -210,8 +218,6 @@ class LeaveRequestRepository implements RepositoryInterface {
                       END IF;
                     END;
     ");
-        } else {
-            $this->tableGateway->update([LeaveApply::STATUS => 'C', LeaveApply::MODIFIED_DT => $currentDate], [LeaveApply::ID => $id]);
         }
     }
 

@@ -158,10 +158,5 @@
             }); 
         });
         
-//        $("#reset").on('click', function () {
-//            $(".form-control").val("");
-//            $("#exparamsId").val("");
-//            document.searchManager.reset();
-//        });
     }); 
 })(window.jQuery, window.app);

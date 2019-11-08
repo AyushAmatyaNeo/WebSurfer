@@ -19,7 +19,7 @@ class Loanlist extends AbstractActionController {
     }
 
     public function indexAction() {
-        
+
     }
 
     public function statusAction() {
@@ -36,13 +36,15 @@ class Loanlist extends AbstractActionController {
 
             switch ($requestType) {
                 case Request::METHOD_GET:
-
                     $responseData = $this->getStatus($this->employeeId);
+                    if ($responseData == NULL) {
+                        return new JsonModel(['success' => true, 'data' => $responseData, 'message' => 'No record found']);
+                    }
                     break;
                 default:
-                    throw new Exception('the request  is unknown');
+                    throw new Exception('the request is unknown');
             }
-            return new JsonModel(['success' => true, 'data' => $responseData, 'message' => $requestType ]);
+            return new JsonModel(['success' => true, 'data' => $responseData, 'message' => $requestType]);
         } catch (Exception $e) {
             return new JsonModel(['success' => false, 'data' => $responseData, 'message' => $e->getMessage()]);
         }

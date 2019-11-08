@@ -156,7 +156,7 @@ class LeaveRequest extends HrisController {
         return Helper::addFlashMessagesToArray($this, [
                     'form' => $this->form,
                     'employeeId' => $this->employeeId,
-                    'leave' => $this->repository->getLeaveList($this->employeeId),
+                    'leave' => $this->repository->getLeaveList($this->employeeId,'Y'),
                     'customRenderer' => Helper::renderCustomView(),
                     'employeeList' => EntityHelper::getTableKVListWithSortOption($this->adapter, HrEmployees::TABLE_NAME, HrEmployees::EMPLOYEE_ID, [HrEmployees::FIRST_NAME, HrEmployees::MIDDLE_NAME, HrEmployees::LAST_NAME], [HrEmployees::STATUS => "E", HrEmployees::RETIRED_FLAG => "N"], HrEmployees::FIRST_NAME, "ASC", " ", false, true),
                     'subLeaveReference' => $subLeaveReference,
@@ -167,7 +167,7 @@ class LeaveRequest extends HrisController {
     public function deleteAction() {
         $id = (int) $this->params()->fromRoute("id");
         if (!$id) {
-            return $this->redirect()->toRoute('leaverequest');
+            return $this->redirect()->toRoute('leaverequest', ['action'=>'cancel']);
         }
         $this->repository->delete($id);
         $this->flashmessenger()->addMessage("Leave Request Successfully Cancelled!!!");
@@ -175,14 +175,14 @@ class LeaveRequest extends HrisController {
         $leaveRequestDetail = $this->repository->fetchById($id);
         $leaveRequest->exchangeArrayFromDB($leaveRequestDetail);
 
-        IF ($leaveRequest->status == 'CP') {
+        if ($leaveRequest->status == 'CP') {
             try {
                 HeadNotification::pushNotification(NotificationEvents::LEAVE_CANCELLED, $leaveRequest, $this->adapter, $this);
             } catch (Exception $e) {
                 $this->flashmessenger()->addMessage($e->getMessage());
             }
         } 
-        return $this->redirect()->toRoute('leaverequest');
+        return $this->redirect()->toRoute('leaverequest',['action'=>'cancel']);
     }
 
     public function viewAction() {
@@ -200,7 +200,10 @@ class LeaveRequest extends HrisController {
         //to get the previous balance of selected leave from assigned leave detail
         $result = $leaveApproveRepository->assignedLeaveDetail($detail['LEAVE_ID'], $detail['EMPLOYEE_ID']);
         $preBalance = $result['BALANCE'];
- 
+        
+        $actualDays = ($detail['ACTUAL_DAYS']<1)?'0'+$detail['ACTUAL_DAYS']:$detail['ACTUAL_DAYS'];
+        $halfDayDetail = $detail['HALF_DAY_DETAIL'];
+        
         $leaveApply = new LeaveApply();
         $leaveApply->exchangeArrayFromDB($detail);
         $this->form->bind($leaveApply);
@@ -226,7 +229,9 @@ class LeaveRequest extends HrisController {
                     'subApprovedFlag' => $detail['SUB_APPROVED_FLAG'],
                     'employeeList' => EntityHelper::getTableKVListWithSortOption($this->adapter, HrEmployees::TABLE_NAME, HrEmployees::EMPLOYEE_ID, [HrEmployees::FIRST_NAME, HrEmployees::MIDDLE_NAME, HrEmployees::LAST_NAME], [HrEmployees::STATUS => "E", HrEmployees::RETIRED_FLAG => "N"], HrEmployees::FIRST_NAME, "ASC", " ", false, true),
                     'gp' => $detail['GRACE_PERIOD'],
-                    'files' => $fileDetails
+                    'files' => $fileDetails,
+                    'actualDays' => $actualDays,
+                    'halfdayDetail' => $halfDayDetail
         ]);
     }
 
@@ -310,6 +315,28 @@ class LeaveRequest extends HrisController {
             return new CustomViewModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
         }
     }
-    
+
+    public function cancelAction() {
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            try {
+                $data = $request->getPost();
+                $rawList = $this->repository->getfilterRecords($data);
+                $list = Helper::extractDbData($rawList);
+                return new JsonModel(['success' => true, 'data' => $list, 'error' => '']);
+            } catch (Exception $e) {
+                return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+            }
+        }
+        $leaveList = EntityHelper::getTableKVListWithSortOption($this->adapter, LeaveMaster::TABLE_NAME, LeaveMaster::LEAVE_ID, [LeaveMaster::LEAVE_ENAME], [LeaveMaster::STATUS => 'E'], LeaveMaster::LEAVE_ENAME, "ASC", null, true);
+        $leaveSE = $this->getSelectElement(['name' => 'leave', 'id' => 'leaveId', 'class' => 'form-control', 'label' => 'Leave Type'], $leaveList);
+        $leaveStatusFE = $this->getStatusSelectElement(['name' => 'leaveStatus', 'id' => 'leaveRequestStatusId', 'class' => 'form-control', 'label' => 'Leave Request Status']);
+
+        return Helper::addFlashMessagesToArray($this, [
+            'leaves' => $leaveSE,
+            'leaveStatus' => $leaveStatusFE,
+            'employeeId' => $this->employeeId,
+        ]);
+    }
 
 }

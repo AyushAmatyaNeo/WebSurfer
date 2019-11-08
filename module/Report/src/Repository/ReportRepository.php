@@ -673,6 +673,7 @@ EOT;
                       SELECT 
                       TRUNC(AD.ATTENDANCE_DT)-TRUNC(M.FROM_DATE)+1                              AS DAY_COUNT, 
                       E.EMPLOYEE_ID                                                             AS EMPLOYEE_ID ,
+                      E.EMPLOYEE_CODE                                                               AS EMPLOYEE_CODE,
                       E.FIRST_NAME                                                                   AS FIRST_NAME,
                       E.MIDDLE_NAME                                                                  AS MIDDLE_NAME,
                       E.LAST_NAME                                                                    AS LAST_NAME,
@@ -721,7 +722,10 @@ EOT;
                           AND  AD.DAYOFF_FLAG='Y'
                         THEN 1
                         ELSE 0
-                      END) AS IS_DAYOFF
+                      END) AS IS_DAYOFF,
+                      TO_CHAR(AD.IN_TIME, 'HH24:mi') as IN_TIME,
+                      TO_CHAR(AD.OUT_TIME, 'HH24:mi') as OUT_TIME,
+                      MIN_TO_HOUR(AD.TOTAL_HOUR)      AS TOTAL_HOUR
                     FROM HRIS_ATTENDANCE_DETAIL AD
                     JOIN HRIS_EMPLOYEES E
                     ON (AD.EMPLOYEE_ID = E.EMPLOYEE_ID),
@@ -757,7 +761,7 @@ EOT;
         $otFromCondition = "";
         $otToCondition = "";
 
-        $condition = EntityHelper::getSearchConditon($data['companyId'], $data['branchId'], $data['departmentId'], $data['positionId'], $data['designationId'], $data['serviceTypeId'], $data['serviceEventTypeId'], $data['employeeTypeId'], $data['employeeId'], $data['genderId'], $data['locationId']);
+        $condition = EntityHelper::getSearchConditon($data['companyId'], $data['branchId'], $data['departmentId'], $data['positionId'], $data['designationId'], $data['serviceTypeId'], $data['serviceEventTypeId'], $data['employeeTypeId'], $data['employeeId'], $data['genderId'], $data['locationId'], $data['functionalTypeId']);
 
         if (isset($data['fromDate']) && $data['fromDate'] != null && $data['fromDate'] != -1) {
             $fromDate = Helper::getExpressionDate($data['fromDate']);
@@ -770,7 +774,7 @@ EOT;
             $otToCondition = "AND OVERTIME_DATE <= {$toDate->getExpression()} ";
         }
 
-
+        $monthId = $data['monthId'];
 
         $sql = <<<EOT
             SELECT C.COMPANY_NAME,
@@ -785,11 +789,13 @@ EOT;
               A.PAID_LEAVE,
               A.UNPAID_LEAVE,
               A.ABSENT,
-              NVL(ROUND(A.TOTAL_MIN/60,2),0) AS OVERTIME_HOUR,
+              NVL(ROUND(A.TOTAL_MIN/60,2),0) + NVL(AD.ADDITION,0) - NVL(AD.DEDUCTION,0) AS OVERTIME_HOUR,
               A.TRAVEL,
               A.TRAINING,
               A.WORK_ON_HOLIDAY,
-              A.WORK_ON_DAYOFF
+              A.WORK_ON_DAYOFF,
+              AD.ADDITION,
+              AD.DEDUCTION
             FROM
               (SELECT A.EMPLOYEE_ID,
                 SUM(
@@ -919,6 +925,8 @@ GROUP BY
             ON(E.COMPANY_ID= C.COMPANY_ID)
             LEFT JOIN HRIS_DEPARTMENTS D
             ON (E.DEPARTMENT_ID= D.DEPARTMENT_ID)
+            LEFT JOIN HRIS_OVERTIME_A_D AD
+            ON (A.EMPLOYEE_ID = AD.EMPLOYEE_ID AND AD.MONTH_ID = {$monthId})
             WHERE 1            =1 {$condition}
             ORDER BY C.COMPANY_NAME,
               D.DEPARTMENT_NAME,
@@ -1021,7 +1029,7 @@ EOT;
     }
 
     public function employeeMonthlyReport($searchQuery) {
-        $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId']);
+        $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId'], null, null, $searchQuery['functionalTypeId']);
         $sql = <<<EOT
                 SELECT D.FULL_NAME, D.EMPLOYEE_CODE,
                   R.*
@@ -1121,9 +1129,7 @@ EOT;
             }
         }
 
-
-
-        $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId']);
+        $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId'], null, null, $searchQuery['functionalTypeId']);
 //        $sql = <<<EOT
 //             SELECT PL.*,
 //                CL.PRESENT,
@@ -1660,7 +1666,7 @@ SUM(total) FOR variable_type
     }
 
     public function fetchWeeklyWorkingHoursReport($by) {
-        $condition = EntityHelper::getSearchConditon($by['companyId'], $by['branchId'], $by['departmentId'], $by['positionId'], $by['designationId'], $by['serviceTypeId'], $by['serviceEventTypeId'], $by['employeeTypeId'], $by['employeeId'], $by['genderId'], $by['locationId']);
+        $condition = EntityHelper::getSearchConditon($by['companyId'], $by['branchId'], $by['departmentId'], $by['positionId'], $by['designationId'], $by['serviceTypeId'], $by['serviceEventTypeId'], $by['employeeTypeId'], $by['employeeId'], $by['genderId'], $by['locationId'], $by['functionalTypeId']);
 
         $toDate = !empty($_POST['toDate']) ? $_POST['toDate'] : date('d-M-y', strtotime('now'));
         $toDate = date('d-M-y', strtotime($toDate));
@@ -1776,7 +1782,7 @@ FROM
             $otToCondition = "AND OVERTIME_DATE <= {$toDate->getExpression()} ";
         }
 
-
+        $monthId = $data['monthId'];
 
         $sql = <<<EOT
             SELECT C.COMPANY_NAME,
@@ -1791,14 +1797,18 @@ FROM
               A.PAID_LEAVE,
               A.UNPAID_LEAVE,
               A.ABSENT,
-              NVL(ROUND(A.TOTAL_MIN/60,2),0) AS OVERTIME_HOUR,
+              NVL(ROUND(A.TOTAL_MIN/60,2),0) + NVL(AD.ADDITION,0) - NVL(AD.DEDUCTION,0) AS OVERTIME_HOUR,
               A.TRAVEL,
               A.TRAINING,
               A.WORK_ON_HOLIDAY,
               A.WORK_ON_DAYOFF,
               A.NIGHT_SHIFT_6,
               A.NIGHT_SHIFT_8,
-              A.C_SHIFT
+              A.C_SHIFT,
+              AD.ADDITION,
+              AD.DEDUCTION
+              ,ABDH
+              ,LBDH
             FROM
               (SELECT A.EMPLOYEE_ID,
                 SUM(
@@ -1920,7 +1930,18 @@ FROM
                     THEN OT.TOTAL_HOUR
                     ELSE OTM.OVERTIME_HOUR*60
                   END ) AS TOTAL_MIN
+                ,sum(
+                  case when A.OVERALL_STATUS in('DO','HD') and APY.OVERALL_STATUS='AB' and APT.OVERALL_STATUS='AB'
+                  then 1 
+                  end 
+                  )as ABDH
+                 ,sum(
+                 case when A.OVERALL_STATUS in('DO','HD') and APY.OVERALL_STATUS='LV' and APT.OVERALL_STATUS='LV'
+                 then 1 end
+                 ) as LBDH
               FROM HRIS_ATTENDANCE_PAYROLL A
+              LEFT JOIN HRIS_ATTENDANCE_PAYROLL APY on (A.ATTENDANCE_DT=APY.ATTENDANCE_DT-1 and A.employee_id=APY.EMPLOYEE_ID)
+              LEFT JOIN HRIS_ATTENDANCE_PAYROLL APT on (A.ATTENDANCE_DT=APT.ATTENDANCE_DT+1 and A.employee_id=APT.EMPLOYEE_ID)
               LEFT JOIN (SELECT
     employee_id,
     overtime_date,
@@ -1946,6 +1967,8 @@ GROUP BY
             ON(E.COMPANY_ID= C.COMPANY_ID)
             LEFT JOIN HRIS_DEPARTMENTS D
             ON (E.DEPARTMENT_ID= D.DEPARTMENT_ID)
+            LEFT JOIN HRIS_OVERTIME_A_D AD
+            ON (A.EMPLOYEE_ID = AD.EMPLOYEE_ID AND AD.MONTH_ID = {$monthId})
             WHERE 1 = 1 {$condition}
             ORDER BY C.COMPANY_NAME,
               D.DEPARTMENT_NAME,
@@ -2066,8 +2089,6 @@ EOT;
                  
 EOT;
 
-//         echo $sql;
-//         die();
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
         return ['monthDetail' => $monthDetail, 'data' => Helper::extractDbData($result)];
