@@ -8,20 +8,18 @@ use Zend\Mail\Transport\SmtpOptions;
 class EmailHelper {
 
     const maxMassMail = 50;
-    const massEmailId = 'mhrpravin@gmail.com';
+    const massEmailId = '';
 
     public static function getSmtpTransport(): Smtp {
         $transport = new Smtp();
         $options = new SmtpOptions([
-            'host' => 'smtp.ionosss.com',
-            'port' => 465,
+            'host' => '192.168.0.10',
+            'port' => 25,
             'connection_class' => 'login',
             'connection_config' => [
-// 'username' => 'ukesh.gaiju@itnepal.com',
-// 'password' => 'ukesh@123',
-                'username' => 'prabin.maharjan@itnepal.com',
-                'password' => 'prabin@123456',
-                'ssl' => 'ssl',
+                'username' => 'HRD@nbbl.com.np',
+                'password' => 'hRMD@9999.',
+               // 'ssl' => 'tls',
             ],
         ]);
         $transport->setOptions($options);
@@ -31,7 +29,7 @@ class EmailHelper {
     public static function sendEmail(Message $mail) {
         if ('development' == APPLICATION_ENV || 'staging' == APPLICATION_ENV) {
             return true;
-        }
+		}
         $transport = self::getSmtpTransport();
         $connectionConfig = $transport->getOptions()->getConnectionConfig();
         $mail->setFrom($connectionConfig['username']);
