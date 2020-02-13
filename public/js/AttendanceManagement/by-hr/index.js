@@ -217,15 +217,14 @@
             'FUNCTIONAL_TYPE_EDESC': 'Functional Type'
         };
         $('#excelExport').on('click', function () {
-            app.excelExport($table, exportMap, "AttendanceList.xlsx");
+            app.excelExport($table, exportMap, "Attendance Report.xlsx");
         });
         $('#pdfExport').on('click', function () {
-            app.exportToPDF($table, exportMap, "AttendanceList.pdf");
-
+            app.exportToPDF($table, exportMap, "Attendance Report.pdf",'A3');
         });
         
         $('#pdfExportDaily').on('click', function () {
-            app.exportToPDF($table, {
+            app.exportToPDFPotrait($table, {
                 'SN':'Sn',
             'EMPLOYEE_CODE': 'Code',
             'EMPLOYEE_NAME': ' Name',
@@ -233,8 +232,8 @@
             'ATTENDANCE_DT': 'Date',
             'IN_TIME': 'In Time',
             'OUT_TIME': 'Out Time'}, "DailyAttendance.pdf");
-
         });
+
         $('#excelExportDaily').on('click',function(){
             app.excelExport($table, {
                 'SN':'Sn',
@@ -285,6 +284,7 @@
             var shiftId = $("#shiftId").val();
             var in_time = $("#inTime").val();
             var out_time = $("#outTime").val();
+            var outNextDay = $("#outNextDay").prop('checked');
             $bulkBtnContainer.hide();
             var impactOtherDays = $impactOtherDays.prop('checked');
             for (var i in selectItems) {
@@ -296,7 +296,8 @@
                         id: i, employeeId: selectItems[i]['employeeId'], 
                         attendanceDt: selectItems[i]['attendanceDt'], 
                         action: btnId, 
-                        impactOtherDays: impactOtherDays
+                        impactOtherDays: impactOtherDays,
+                        outNextDay: outNextDay
                     });
                 }
             }
@@ -347,11 +348,20 @@
             }
             $scope.view();
         }
-        
-        
-//        $("#reset").on("click", function () {
-//                app.resetField();
-//        });
+
+        let $branch = $('#branchId');
+        let $province= $('#province');
+        let populateBranch ;
+
+        $province.on("change", function () {
+            populateBranch = [];
+            $.each(document.braProv, function(k,v){
+                if(v == $province.val()){
+                    populateBranch.push(k);
+                }
+            });
+            $branch.val(populateBranch).change();
+        });
 
     });
 })(window.jQuery, window.app);

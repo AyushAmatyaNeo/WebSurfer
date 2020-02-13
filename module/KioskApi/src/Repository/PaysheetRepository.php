@@ -25,7 +25,7 @@ WHERE P.INCLUDE_IN_SALARY='Y' AND TS.VAL >0
 AND TS.SHEET_NO IN
 (SELECT SHEET_NO FROM HRIS_SALARY_SHEET WHERE MONTH_ID =13
 AND SALARY_TYPE_ID=1
-)
+) AND P.pay_type_flag!='V' 
 AND EMPLOYEE_ID ={$employeeId} ORDER BY P.PRIORITY_INDEX
             ";
 
@@ -36,7 +36,9 @@ AND EMPLOYEE_ID ={$employeeId} ORDER BY P.PRIORITY_INDEX
 
     public function fetchEmployeeDetail($employeeId) {
         $sql = "
-            select * from HRIS_SALARY_SHEET_EMP_DETAIL where EMPLOYEE_ID = {$employeeId} and MONTH_ID = 13
+        select he.employee_code,hd.* from HRIS_SALARY_SHEET_EMP_DETAIL hd 
+        join hris_employees he on (he.employee_id=hd.employee_id) 
+        where hd.employee_id={$employeeId} and MONTH_ID = 13
             ";
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();

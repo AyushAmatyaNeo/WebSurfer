@@ -3,9 +3,23 @@
     $(document).ready(function () {
         $("select").select2();
 
-
         var $employeeTable = $('#employeeTable');
         var $search = $('#search');
+
+        let $branch = $('#branchId');
+        let $province= $('#province');
+        let populateBranch ;
+        let exportData;
+
+        $province.on("change", function () {
+            populateBranch = [];
+            $.each(document.braProv, function(k,v){
+                if(v == $province.val()){
+                    populateBranch.push(k);
+                }
+            });
+            $branch.val(populateBranch).change();
+        });
 
         var actiontemplateConfig = {
             view: {
@@ -45,7 +59,7 @@
             {field: "FUNCTIONAL_TYPE_EDESC", title: "Functional Type", width: 150},
             {field: "FUNCTIONAL_LEVEL_EDESC", title: "Functional Level", width: 150},
             {field: "EMPLOYEE_ID", title: "Action", width: 120, locked: true, template: app.genKendoActionTemplate(actiontemplateConfig)}
-        ]);
+        ], null, null, null, 'Employee List');
         app.searchTable('employeeTable', ['EMPLOYEE_CODE', 'FULL_NAME', 'MOBILE_NO', 'BIRTH_DATE', 'COMPANY_NAME', 'BRANCH_NAME', 'DEPARTMENT_NAME', 'DESIGNATION_TITLE'], false);
   
         var map = {
@@ -114,41 +128,29 @@
         app.populateSelect($exparams, exportColumnParameters, 'VALUES', 'COLUMNS');
  
         $('#excelExport').on('click', function () {
-            var exportColumns = [];
-            var map_bk = map;
-            exportColumns = $('#exparamsId').val();
-            if(exportColumns != null){
-                if(exportColumns.length > 0){
-                    map = {};
-                    for(var i = 0; i < exportColumns.length; i++){
-                        map[exportColumns[i]] = map_bk[exportColumns[i]];
-                    }
-                }
-            }
-            app.excelExport($employeeTable, map, 'Employee List.xlsx');
-            map = map_bk;
+            var fc = app.filterExportColumns($("#exparamsId").val(), map);
+            app.excelExport($employeeTable, fc, 'Employee List.xlsx');
         });
         $('#pdfExport').on('click', function () {
-            var exportColumns = [];
-            var map_bk = map;
-            exportColumns = $('#exparamsId').val();
-            if(exportColumns != null){
-                if(exportColumns.length > 0){
-                    map = {};
-                    for(var i = 0; i < exportColumns.length; i++){
-                        map[exportColumns[i]] = map_bk[exportColumns[i]];
-                    }
-                }
-            }
-            app.exportToPDF($employeeTable, map, 'Employee List.pdf');
-            map = map_bk;
+            var fc = app.filterExportColumns($("#exparamsId").val(), map);
+            app.exportToPDF($employeeTable, fc, 'Employee List.pdf');
+        });
+
+        $('#excelExportWithImage').on('click', function () {
+            var data = {
+                exportData : exportData,
+                map : map
+            };
+            app.serverRequest(document.excelExportWithImageLink, data).then(function(response){
+                window.open(document.excelExportWithImageDownload);
+            });
         });
 
         $search.on('click', function () {
             var data = document.searchManager.getSearchValues();
             app.serverRequest(document.pullEmployeeListForEmployeeTableLink, data).then(function (response) {
                 if (response.success) {
-                    console.log(response);
+                    exportData = response.data;
                     app.renderKendoGrid($employeeTable, response.data);
                 } else {
                     app.showMessage(response.error, 'error');

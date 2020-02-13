@@ -11,7 +11,12 @@ use Zend\Db\Sql\Sql;
 class LeaveReportCardRepository extends HrisRepository {
 
   public function fetchLeaveReportCard($by){
-    
+    $leaveId = $by['data']['leaveId'];
+    $leaveId = implode($leaveId, ',');
+    $leaveIdFilter = "";
+    if($leaveId != '' && $leaveId != null){
+      $leaveIdFilter.=" and l.leave_id IN ($leaveId)";
+    }
     $employees = $by['data']['employeeId'];
     //$employees = implode(',', $employees);
 
@@ -40,24 +45,27 @@ class LeaveReportCardRepository extends HrisRepository {
     RECM.EMPLOYEE_ID=RA.RECOMMEND_BY LEFT JOIN HRIS_EMPLOYEES APRV ON APRV.EMPLOYEE_ID=RA.APPROVED_BY 
     INNER JOIN HRIS_DESIGNATIONS D ON E.DESIGNATION_ID = D.DESIGNATION_ID  
     INNER JOIN HRIS_DEPARTMENTS HD ON E.DEPARTMENT_ID = HD.DEPARTMENT_ID
-    WHERE L.STATUS='E' AND (TRUNC(SYSDATE)- LA.REQUESTED_DT) < (
-                          CASE
-                            WHEN LA.STATUS = 'C'
-                            THEN 20
-                            ELSE 365
-                            END) AND E.EMPLOYEE_ID IN ($employees) ORDER BY LA.REQUESTED_DT ASC";  
-    
+    WHERE L.STATUS='E' and la.status='AP'  AND E.EMPLOYEE_ID IN ($employees) {$leaveIdFilter} ORDER BY LA.REQUESTED_DT ASC";  
+                            //echo $sql; die;
     return $this->rawQuery($sql);    
   }
 
-  public function fetchLeaves($empId){
+  public function fetchLeaves($empId, $leaveId){
+    $leaveId = implode($leaveId, ',');
+    $leaveIdFilter = "";
+    if($leaveId != '' && $leaveId != null){
+      $leaveIdFilter.=" and lms.leave_id IN ($leaveId)";
+    }
     $sql = "select 
     Lms.Leave_Ename,Lms.LEAVE_ID,
-    la.Total_Days
+    la.Total_Days, nvl(la.PREVIOUS_YEAR_BAL, 0) as PREVIOUS_YEAR_BAL,
+    la.Total_Days + nvl(la.PREVIOUS_YEAR_BAL, 0) as Balance
     from hris_leave_master_setup lms
     left join Hris_Employee_Leave_Assign la on (lms.leave_id=la.leave_id )
-    where la.employee_id= $empId order by Lms.LEAVE_ID asc";
-    
+    where 1=1 and lms.status = 'E' and la.employee_id= $empId 
+    {$leaveIdFilter}
+    order by Lms.LEAVE_ID asc";
+//    echo $sql; die;
     return $this->rawQuery($sql);
   }
 } 

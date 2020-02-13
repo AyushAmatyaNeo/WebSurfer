@@ -16,7 +16,7 @@
         app.populateSelect($positionId, document.positions, "POSITION_ID", "POSITION_NAME", "Select position");
         app.populateSelect($flatValueId, document.flatValues, "FLAT_ID", "FLAT_EDESC", "Select Flat Value");
         app.populateSelect($fiscalYearId, document.fiscalYears, "FISCAL_YEAR_ID", "FISCAL_YEAR_NAME", "Select Fiscal Year");
-
+        $('#fiscalYearId').val($('#fiscalYearId option:last').val());
         app.searchTable($table, ['FULL_NAME', 'EMPLOYEE_CODE']);
         $("#searchFieldDiv").hide();
         $("#assignFlatValueBtn").hide();
@@ -54,14 +54,13 @@
                 columns.push({field: "POSITION_NAME", title: "Position", width: 80, locked: true});
                 let totalRow = {};
                 totalRow = {...totalRow, ...response.data[0]};
-                let counter = 1;
                 for(let i in response.data[0]){
                     totalRow[i] = '';
-                    if(counter > 2){
-                        columns.push({field: i, title: response.columns[counter-3].FLAT_EDESC, width: 160,
+                    if(i.startsWith("F_")){
+                        let title = response.columns.filter((item) => item.TITLE == i);
+                        columns.push({field: i, title: title[0].FLAT_EDESC, width: 160,
                 template: '<input type="number" class="'+i+'" value="#: '+i+'||""#" style="height:17px;">'});
                     }
-                    counter++; 
                 }
                 response.data.push(totalRow);
                 app.initializeKendoGrid($table, columns);
@@ -82,7 +81,7 @@
             var key = this.className;
             dataItem[key] = updatedValue;
 
-            if(row.is(":last-child")){
+            if(row.is(":last-child") && (grid.dataSource.view().length == grid.dataSource.total())){
                 $("."+key).val(updatedValue);
                 var dataSource = grid.dataSource;
                 $.each(grid.items(), function(index, item) {

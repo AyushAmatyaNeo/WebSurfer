@@ -51,7 +51,8 @@ class PayrollGenerator {
         "BRANCH_ID",
         "CAFE_MEAL_PREVIOUS",
         "CAFE_MEAL_CURRENT",
-        "PAYROLL_EMPLOYEE_TYPE"
+        "PAYROLL_EMPLOYEE_TYPE",
+        "EMPLOYEE_SERVICE_ID"
     ];
     const SYSTEM_RULE = [
         "TOTAL_ANNUAL_AMOUNT",
@@ -61,7 +62,10 @@ class PayrollGenerator {
         "LOAN_AMT",
         "LOAN_INT",
         "PREVIOUS_TOTAL",
-        "PREVIOUS_MONTH_AMOUNT"
+        "PREVIOUS_MONTH_AMOUNT",
+        "EMPLOYEE_GRADE",
+        "TOTAL_ADD",
+        "TOTAL_DED"
     ];
 
     public function __construct($adapter) {
@@ -109,6 +113,9 @@ class PayrollGenerator {
         foreach ($payList as $ruleDetail) {
             $ruleId = $ruleDetail[Rules::PAY_ID];
             $formula = $ruleDetail[Rules::FORMULA];
+            $ruleCode = $ruleDetail[Rules::PAY_CODE];
+            $ruleEdesc = $ruleDetail[Rules::PAY_EDESC];
+            $ruleFormula = $formula;
             
             // to override formula start
             $salaryTypeId=$ruleDetail['SALARY_TYPE_ID'];
@@ -120,7 +127,7 @@ class PayrollGenerator {
                 $formula = 0;
             }
             // to override formula end
-            $q = ['MONTH_ID' => $this->monthId, 'PAY_ID' => $ruleId, 'EMPLOYEE_ID' => $this->employeeId];
+            $q = ['MONTH_ID' => $this->monthId, 'PAY_ID' => $ruleId, 'EMPLOYEE_ID' => $this->employeeId , 'SALARY_TYPE_ID' => $salaryTypeId];
             $ruleValue = $this->sspvmRepo->fetch($q);
             if ($ruleValue == null) {
                 $refRules = $this->ruleRepo->fetchReferencingRules($ruleId);
@@ -149,8 +156,11 @@ class PayrollGenerator {
                 //print_r($processedformula);
                 
                 $current = file_get_contents($file);
-                file_put_contents($file, $current."\r\nstartRuleId=".$ruleId." ".$processedformula);
+                file_put_contents($file, $current."\r\nstartRuleId(".$ruleCode.")=".$ruleId."-".$ruleEdesc."\n".$ruleFormula."\n".$processedformula."\n");
                 $ruleValue = eval("return {$processedformula} ;");
+                    if(is_nan($ruleValue)){
+                        $ruleValue=0;
+                    }
             }
             $rule = ["ruleValue" => $ruleValue, "rule" => $ruleDetail];
             array_push($this->ruleDetailList, $rule);
@@ -206,7 +216,7 @@ class PayrollGenerator {
         if (strpos($rule, $variable) !== false) {
             $variableProcessor = new VariableProcessor($this->adapter, $this->employeeId, $this->monthId, $this->sheetNo);
             $processedVariable = $variableProcessor->processVariable($key);
-            return str_replace($variable, is_string($processedVariable) ? "'{$processedVariable}'" : $processedVariable, $rule);
+            return str_replace($variable, is_string($processedVariable) ? "{$processedVariable}" : $processedVariable, $rule);
         } else {
             return $rule;
         }
@@ -216,7 +226,7 @@ class PayrollGenerator {
         if (strpos($rule, $variable) !== false) {
             $systemRuleProcessor = new SystemRuleProcessor($this->adapter, $this->employeeId, $this->ruleDetailList, $this->monthId, $ruleId);
             $processedSystemRule = $systemRuleProcessor->processSystemRule($key);
-            return str_replace($variable, is_string($processedSystemRule) ? "'{$processedSystemRule}'" : $processedSystemRule, $rule);
+            return str_replace($variable, is_string($processedSystemRule) ? "{$processedSystemRule}" : $processedSystemRule, $rule);
         } else {
             return $rule;
         }

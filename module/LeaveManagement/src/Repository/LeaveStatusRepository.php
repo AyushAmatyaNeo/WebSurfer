@@ -276,6 +276,7 @@ AS LEAVE_ENAME,
                   LA.APPROVED_BY                                     AS APPROVED_BY,
                   LA.RECOMMENDED_REMARKS                             AS RECOMMENDED_REMARKS,
                   LA.APPROVED_REMARKS                                AS APPROVED_REMARKS,
+                  LA.HARDCOPY_SIGNED_FLAG                            AS HARDCOPY_SIGNED_FLAG,
                   LS.APPROVED_FLAG                                   AS SUB_APPROVED_FLAG,
                   INITCAP(TO_CHAR(LS.APPROVED_DATE, 'DD-MON-YYYY'))  AS SUB_APPROVED_DATE,
                   LS.EMPLOYEE_ID                                     AS SUB_EMPLOYEE_ID
@@ -314,7 +315,7 @@ WOH_ID AS ID
 from 
 HRIS_EMPLOYEE_LEAVE_ADDITION LA
 JOIN Hris_Employee_Work_Holiday WH ON (LA.WOH_ID=WH.ID)
-LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID)
+LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID AND SLR.EMPLOYEE_ID=LA.EMPLOYEE_ID)
 LEFT JOIN HRIS_FUNCTIONAL_TYPES FUNT
     ON E.FUNCTIONAL_TYPE_ID=FUNT.FUNCTIONAL_TYPE_ID                
                 WHERE L.STATUS ='E'

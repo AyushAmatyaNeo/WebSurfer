@@ -1659,3 +1659,232 @@ INSERT INTO hris_menus (
     NULL,
     'Y'
 );
+
+INSERT
+INTO HRIS_MENUS
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Overtime / WOH Bulk Update',
+    301,
+    NULL,
+    'overtime-bulk-setup',
+    'E',
+    trunc(sysdate),
+    NULL,
+    'fa fa-list-alt',
+    'index',
+    9,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT
+INTO hris_menus
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Attendance SCP Report',
+    4,
+    NULL,
+    'attendancebyhr',
+    'E',
+    TRUNC(SYSDATE),
+    TRUNC(SYSDATE),
+    'fa fa-pencil',
+    'reportOnly',
+    2,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT
+INTO hris_menus
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Whereabout Assign',
+    301,
+    NULL,
+    'whereabouts',
+    'E',
+    TRUNC(SYSDATE),
+    TRUNC(SYSDATE),
+    'fa fa-pencil',
+    'index',
+    2,
+    NULL,
+    NULL,
+    'Y'
+);
+
+INSERT
+INTO HRIS_MENUS
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Whereabout Report',
+    (select menu_id from hris_menus where lower(menu_name) = 'report' AND PARENT_MENU = 302),
+    NULL,
+    'allreport',
+    'E',
+    trunc(sysdate),
+    NULL,
+    'fa fa-pencil',
+    'whereabouts',
+    (select max(menu_index)+1  from hris_menus where PARENT_MENU = 148),
+    NULL,
+    NULL,
+    'Y'
+);
+
+
+
+INSERT
+INTO HRIS_MENUS
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Travel Itnary',
+    (select menu_id from hris_menus where lower(menu_name) = 'self service'),
+    NULL,
+    'travelItnary',
+    'E',
+    trunc(sysdate),
+    NULL,
+    'fa fa-pencil',
+    'index',
+    12,
+    NULL,
+    NULL,
+    'Y'
+);
+
+
+INSERT
+INTO HRIS_MENUS
+(
+    MENU_CODE,
+    MENU_ID,
+    MENU_NAME,
+    PARENT_MENU,
+    MENU_DESCRIPTION,
+    ROUTE,
+    STATUS,
+    CREATED_DT,
+    MODIFIED_DT,
+    ICON_CLASS,
+    ACTION,
+    MENU_INDEX,
+    CREATED_BY,
+    MODIFIED_BY,
+    IS_VISIBLE
+)
+VALUES
+(
+    NULL,
+    (select max(menu_id)+1 from hris_menus),
+    'Leave Deduction',
+    2,
+    NULL,
+    'leavededuction',
+    'E',
+    to_date('31-JAN-20','DD-MON-RR'),
+    to_date('31-JAN-20','DD-MON-RR'),
+    'fa fa-pencil',
+    'index',
+    6,NULL,NULL,
+    'Y'
+);

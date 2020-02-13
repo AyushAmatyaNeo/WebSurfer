@@ -36,7 +36,12 @@ class AllReportController extends HrisController {
                     ],
                     'monthId' => $monthId,
                     'branchId' => $branchId,
-                    'preference' => $this->preference
+                    'searchValues' => EntityHelper::getSearchData($this->adapter),
+                    'acl' => $this->acl,
+                    'employeeDetail' => $this->storageData['employee_detail'],
+                    'preference' => $this->preference,
+                    'name' => $this->storageData['employee_detail']['EMPLOYEE_CODE'].'-'.$this->storageData['employee_detail']['FULL_NAME'],
+                    'companyLogo' => $this->storageData['employee_detail']['COMPANY_FILE_PATH'],
         ]);
     }
     
@@ -45,12 +50,18 @@ class AllReportController extends HrisController {
         $branchId = (int) $this->params()->fromRoute('id2');
 
         return Helper::addFlashMessagesToArray($this, [
-                    'comBraList' => [
-                        'BRANCH_LIST' => EntityHelper::getTableList($this->adapter, Branch::TABLE_NAME, [Branch::BRANCH_ID, Branch::BRANCH_NAME, Branch::COMPANY_ID], [Branch::STATUS => "E"])
-                    ],
+//                    'comBraList' => [
+//                        'BRANCH_LIST' => EntityHelper::getTableList($this->adapter, Branch::TABLE_NAME, [Branch::BRANCH_ID, Branch::BRANCH_NAME, Branch::COMPANY_ID], [Branch::STATUS => "E"])
+//                    ],
                     'monthId' => $monthId,
-                    'branchId' => $branchId,
-                    'preference' => $this->preference
+//                    'branchId' => $branchId,
+                    'preference' => $this->preference,
+                    'searchValues' => EntityHelper::getSearchData($this->adapter),
+                    'acl' => $this->acl,
+                    'employeeDetail' => $this->storageData['employee_detail'],
+                    'preference' => $this->preference,
+                    'name' => $this->storageData['employee_detail']['EMPLOYEE_CODE'].'-'.$this->storageData['employee_detail']['FULL_NAME'],
+                    'companyLogo' => $this->storageData['employee_detail']['COMPANY_FILE_PATH'],
         ]);
     }
 
@@ -59,7 +70,6 @@ class AllReportController extends HrisController {
             $request = $this->getRequest();
             if ($request->isPost()) {
                 $postedData = $request->getPost();
-
                 $branchId = $postedData['branchId'];
                 if (!isset($branchId)) {
                     throw new Exception("parameter branchId is required");
@@ -69,8 +79,15 @@ class AllReportController extends HrisController {
                     throw new Exception("parameter monthId is required");
                 }
 
-                $reportData = $this->repository->branchWiseDailyReport($monthId, $branchId);
-                return new JsonModel(['success' => true, 'data' => $reportData, 'error' => '']);
+                $reportData = $this->repository->branchWiseDailyReport($postedData);
+                $branchName = -1;
+                if($postedData['branchId'] != null ) {
+                    $branchName = $this->repository->getBranchName($postedData['branchId'][0]);
+                }
+                $days = $this->repository->getDaysInMonth($monthId);
+                $dates = $this->repository->getDates($monthId);
+
+                return new JsonModel(['success' => true, 'data' => $reportData, 'days' => $days, 'branchName' => $branchName, 'dates' => $dates, 'error' => '']);
             } else {
                 throw new Exception("The request should be of type post");
             }
@@ -671,7 +688,27 @@ class AllReportController extends HrisController {
                     'preference' => $this->preference,
                     'acl' => $this->acl,
                     'employeeDetail' => $this->storageData['employee_detail'],
+        ]);
+    }
+    
+    public function withOvertimeBotAction() {
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            try {
+                $data = $request->getPost();
+                $reportData = $this->repository->reportWithOTforBot($data);
+                return new JsonModel(['success' => true, 'data' => $reportData, 'error' => '']);
+            } catch (Exception $e) {
+                return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+            }
+        }
+
+        return $this->stickFlashMessagesTo([
+                    'searchValues' => EntityHelper::getSearchData($this->adapter),
                     'linkToEmpower' => $this->repository->checkIfEmpowerTableExists() ? 1 : 0,
+                    'preference' => $this->preference,
+                    'acl' => $this->acl,
+                    'employeeDetail' => $this->storageData['employee_detail'],
         ]);
     }
 
@@ -727,13 +764,27 @@ from hris_employees where status='E'
 and Retired_Flag!='Y' and Resigned_Flag!='Y'");
         $empList=Helper::extractDbData($empRawList);
         
+        $empRawProfileList= EntityHelper::rawQueryResult($this->adapter, "select 
+e.employee_id
+,e.PROFILE_PICTURE_ID
+,ef.file_path
+from
+hris_employees e
+left join HRIS_EMPLOYEE_FILE ef on (ef.file_code=e.PROFILE_PICTURE_ID)");
+        
+        $empProfile=array();
+        foreach($empRawProfileList as $empProList){
+            $empProfile[$empProList['EMPLOYEE_ID']]=$empProList['FILE_PATH'];
+        }
+        
          return $this->stickFlashMessagesTo([
                     'searchValues' => EntityHelper::getSearchData($this->adapter),
                     'preference' => $this->preference,
                     'acl' => $this->acl,
                     'employeeDetail' => $this->storageData['employee_detail'],
                     "calendarType"=>$this->storageData['preference']['calendarView'],
-                    'empList' => $empList
+                    'empList' => $empList,
+                    'empProfile' => $empProfile
         ]);
         
     }
@@ -782,6 +833,26 @@ and Retired_Flag!='Y' and Resigned_Flag!='Y'");
                     'preference' => $this->preference,
                     'acl' => $this->acl,
                     'employeeDetail' => $this->storageData['employee_detail']
+        ]);
+    }
+
+    public function whereaboutsAction() {
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            try {
+                $data = $request->getPost();
+                $reportData = $this->repository->whereaboutsReport($data);
+                return new JsonModel(['success' => true, 'data' => $reportData, 'error' => '']);
+            } catch (Exception $e) {
+                return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+            }
+        }
+
+        return $this->stickFlashMessagesTo([
+            'searchValues' => EntityHelper::getSearchData($this->adapter),
+            'preference' => $this->preference,
+            'acl' => $this->acl,
+            'employeeDetail' => $this->storageData['employee_detail']
         ]);
     }
 

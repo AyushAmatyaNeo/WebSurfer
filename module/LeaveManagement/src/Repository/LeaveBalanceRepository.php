@@ -31,9 +31,14 @@ class LeaveBalanceRepository {
         $this->leaveMonthTableGateway = new TableGateway("HRIS_LEAVE_MONTH_CODE", $adapter);
     }
 
-    public function getAllLeave($isMonthly = false) {
+    public function getAllLeave($isMonthly = false, $leaveId = null) {
+        $leaveCondition = '';
+        $leaveId = implode($leaveId, ',');
+        if($leaveId != null && $leaveId != ''){
+            $leaveCondition .= " and leave_id in ($leaveId)";
+        }
         $condition = $isMonthly ? " AND IS_MONTHLY = 'Y' " : "  AND IS_MONTHLY = 'N' ";
-        $sql = "SELECT LEAVE_ID,INITCAP(LEAVE_ENAME) AS LEAVE_ENAME FROM HRIS_LEAVE_MASTER_SETUP WHERE STATUS='E' {$condition} ORDER BY LEAVE_ID";
+        $sql = "SELECT LEAVE_ID,INITCAP(LEAVE_ENAME) AS LEAVE_ENAME FROM HRIS_LEAVE_MASTER_SETUP WHERE STATUS='E' {$condition} {$leaveCondition} ORDER BY LEAVE_ENAME";
         $statement = $this->adapter->query($sql);
         return $statement->execute();
     }
@@ -176,10 +181,16 @@ class LeaveBalanceRepository {
     }
 
     public function getPivotedList($searchQuery, $isMonthly = false) {
+        $leaveId = $searchQuery['leaveId'];
+        $leaveId = implode($leaveId, ',');
+        $leaveCondition = "";
+        if($leaveId != null && $leaveId != ''){
+            $leaveCondition .= " AND HA.LEAVE_ID IN ($leaveId) ";
+        }
         $searchConditon = EntityHelper::getSearchConditon($searchQuery['companyId'], $searchQuery['branchId'], $searchQuery['departmentId'], $searchQuery['positionId'], $searchQuery['designationId'], $searchQuery['serviceTypeId'], $searchQuery['serviceEventTypeId'], $searchQuery['employeeTypeId'], $searchQuery['employeeId'], $searchQuery['genderId'], $searchQuery['locationId'], $searchQuery['functionalTypeId']);
         $monthlyCondition = $isMonthly ? " AND FISCAL_YEAR_MONTH_NO ={$searchQuery['leaveYearMonthNo']} " : "";
-        $leaveArrayDb = $this->fetchLeaveAsDbArray($isMonthly);
-
+        $leaveArrayDb = $this->fetchLeaveAsDbArray($isMonthly, $leaveId);
+        
         $sql = "
            SELECT LA.*,E.FULL_NAME, E.EMPLOYEE_CODE AS EMPLOYEE_CODE
 ,D.Department_Name,
@@ -190,20 +201,27 @@ FROM (SELECT *
               HA.EMPLOYEE_ID,
                     HA.PREVIOUS_YEAR_BAL,
                     HA.LEAVE_ID,
-                    HA.TOTAL_DAYS AS TOTAL,
+                    HA.TOTAL_DAYS AS CURR,
+                    HA.PREVIOUS_YEAR_BAL+HA.TOTAL_DAYS AS TOTAL,
                     HA.BALANCE,
                     HS.ENCASH_DAYS as ENCASHED,
-                    ( ha.total_days - ha.balance - (case when
-                    HS.ENCASH_DAYS is null then 0 else HS.ENCASH_DAYS end)) AS taken
+                    ( HA.PREVIOUS_YEAR_BAL + ha.total_days - ha.balance - (case when
+                    HS.ENCASH_DAYS is null then 0 else HS.ENCASH_DAYS end) - nvl(EPD.penalty_days,0)) AS taken,
+                    EPD.penalty_days as DEDUCTED
               FROM 
               HRIS_EMPLOYEE_LEAVE_ASSIGN HA
                     left JOIN 
                     HRIS_EMP_SELF_LEAVE_CLOSING HS
                     on (HA.EMPLOYEE_ID = HS.EMPLOYEE_ID and HA.leave_id = HS.leave_id)
+                    left join (
+                    select employee_id,leave_id,sum(no_of_days) as penalty_days
+                    from HRIS_EMPLOYEE_PENALTY_DAYS
+                    group by employee_id,leave_id) EPD
+                    on (EPD.EMPLOYEE_ID = HA.EMPLOYEE_ID AND EPD.LEAVE_ID = HA.LEAVE_ID)
               WHERE ha.EMPLOYEE_ID IN
                 ( SELECT E.EMPLOYEE_ID FROM HRIS_EMPLOYEES E WHERE 1=1 AND E.STATUS='E' {$searchConditon}
-                ){$monthlyCondition}
-              ) PIVOT (sum ( ENCASHED ) AS ENCASHED, MAX(PREVIOUS_YEAR_BAL) AS PREVIOUS_YEAR_BAL,MAX(BALANCE) AS BALANCE,MAX(TOTAL) AS TOTAL,MAX(TAKEN) AS TAKEN FOR LEAVE_ID IN ({$leaveArrayDb}) )
+                ){$monthlyCondition} {$leaveCondition}
+              ) PIVOT (sum ( ENCASHED ) AS ENCASHED, sum ( DEDUCTED ) AS DEDUCTED, MAX(PREVIOUS_YEAR_BAL) AS PREVIOUS_YEAR_BAL,MAX(BALANCE) AS BALANCE,MAX(CURR) AS CURR,MAX(TOTAL) AS TOTAL,MAX(TAKEN) AS TAKEN FOR LEAVE_ID IN ({$leaveArrayDb}) )
             ) LA LEFT JOIN HRIS_EMPLOYEES E ON (LA.EMPLOYEE_ID=E.EMPLOYEE_ID)
             LEFT JOIN HRIS_DESIGNATIONS DES
       ON E.DESIGNATION_ID=DES.DESIGNATION_ID 
@@ -216,9 +234,13 @@ FROM (SELECT *
         return EntityHelper::rawQueryResult($this->adapter, $sql);
     }
 
-    private function fetchLeaveAsDbArray($isMonthly = false) {
+    private function fetchLeaveAsDbArray($isMonthly = false, $leaveId = '') {
         $condition = $isMonthly ? " AND IS_MONTHLY = 'Y' " : " AND IS_MONTHLY = 'N' ";
-        $rawList = EntityHelper::rawQueryResult($this->adapter, "SELECT LEAVE_ID FROM HRIS_LEAVE_MASTER_SETUP WHERE STATUS ='E' {$condition}");
+        $leaveCondition = "";
+        if($leaveId != null && $leaveId != ''){
+            $leaveCondition .= " AND LEAVE_ID IN ($leaveId) ";
+        }
+    $rawList = EntityHelper::rawQueryResult($this->adapter, "SELECT LEAVE_ID FROM HRIS_LEAVE_MASTER_SETUP WHERE STATUS ='E' {$condition} {$leaveCondition}");
         $dbArray = "";
         foreach ($rawList as $key => $row) {
             if ($key == sizeof($rawList)) {
@@ -393,6 +415,7 @@ where 1=1  {$leaveCondition} {$searchCondition}
                     ]), false);
 
             $select->where([LeaveMonths::STATUS => 'E']);
+            $select->order("LEAVE_YEAR_MONTH_NO ASC");
         });
         return $rowset;
     }

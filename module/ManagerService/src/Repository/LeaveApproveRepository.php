@@ -184,6 +184,7 @@ class LeaveApproveRepository implements RepositoryInterface {
                   INITCAP(APRV.FULL_NAME)                             AS APPROVER_NAME,
                   ELA.TOTAL_DAYS                                      AS TOTAL_DAYS,
                   ELA.BALANCE                                         AS BALANCE,
+                  LA.HARDCOPY_SIGNED_FLAG                             AS HR_APPROVED,
                   (CASE WHEN (LA.HALF_DAY IS NULL OR LA.HALF_DAY = 'N')
                   then LA.NO_OF_DAYS
                   else LA.NO_OF_DAYS/2
@@ -229,7 +230,7 @@ class LeaveApproveRepository implements RepositoryInterface {
                 from 
                 HRIS_EMPLOYEE_LEAVE_ADDITION LA
                 JOIN Hris_Employee_Work_Holiday WH ON (LA.WOH_ID=WH.ID)
-                LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID),
+                LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID AND SLR.EMPLOYEE_ID=LA.EMPLOYEE_ID),
                   HRIS_LEAVE_MONTH_CODE MTH,
                   HRIS_EMPLOYEE_LEAVE_ASSIGN ELA
                 WHERE LA.ID = {$id}
@@ -411,7 +412,7 @@ INITCAP(L.LEAVE_ENAME)||'('||SLR.SUB_NAME||')' END AS LEAVE_ENAME
                 from 
                 HRIS_EMPLOYEE_LEAVE_ADDITION LA
                 JOIN Hris_Employee_Work_Holiday WH ON (LA.WOH_ID=WH.ID)
-                LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID),
+                LEFT JOIN Hris_Holiday_Master_Setup H ON (WH.HOLIDAY_ID=H.HOLIDAY_ID)) SLR ON (SLR.ID=LA.SUB_REF_ID AND SLR.EMPLOYEE_ID=LA.EMPLOYEE_ID),
                   HRIS_LEAVE_MONTH_CODE MTH,
                   HRIS_EMPLOYEE_LEAVE_ASSIGN ELA
                 WHERE LA.ID = {$id}

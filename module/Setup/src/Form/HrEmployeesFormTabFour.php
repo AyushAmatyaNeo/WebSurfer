@@ -139,9 +139,9 @@ class HrEmployeesFormTabFour extends Model {
 
     /**
      * @Annotation\Type("Zend\Form\Element\Select")
-     * @Annotation\Required(true)
+     * @Annotation\Required(false)
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"label":"Work On Holiday Rule","value_options":{"L":"Substitute Leave","O":"OverTime"}})
+     * @Annotation\Options({"disable_inarray_validator":"true","label":"Work On Holiday Reward","value_options":{"":"---","L":"Substitute Leave","O":"OverTime"}})
      * @Annotation\Attributes({ "id":"wohFlag","class":"form-control"})
      */
     public $wohFlag;
@@ -154,6 +154,61 @@ class HrEmployeesFormTabFour extends Model {
      * @Annotation\Attributes({"id":"overtimeEligible","value":"N"})
      */
     public $overtimeEligible;
+
+    /**
+     * @Annotation\Type("Zend\Form\Element\Select")
+     * @Annotation\Required(false)
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"disable_inarray_validator":"true","label":"Salary Group"})
+     * @Annotation\Attributes({ "id":"groupId","class":"form-control"})
+     */
+    public $groupId;
+
+    /**
+     * @Annotation\Type("Zend\Form\Element\Select")
+     * @Annotation\Required(false)
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"disable_inarray_validator":"true","label":"Service Event Type"})
+     * @Annotation\Attributes({ "id":"serviceEventTypeId","class":"form-control"})
+     */
+    public $serviceEventTypeId;
+
+    /**
+     * @Annotation\Required(false)
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"Event Date"})
+     * @Annotation\Attributes({"class":"form-control","id":"eventDate" })
+     */
+    public $eventDate;
+
+    /**
+     * * @Annotation\Required(false)
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"Start Date"})
+     * @Annotation\Attributes({"class":"form-control","id":"startDate" })
+     */
+    public $startDate;
+
+    /**
+     * @Annotation\Required(false)
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"End Date"})
+     * @Annotation\Attributes({"class":"form-control","id":"endDate" })
+     */
+    public $endDate;
+
+    /**
+     * @Annotation\Required(false)
+     * @Annotation\Type("Zend\Form\Element\Number")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"Allowance"})
+     * @Annotation\Validator({"name":"StringLength", "options":{"max":"9"}})
+     * @Annotation\Attributes({ "id":"allowance", "class":"form-control","step":"1","min":"0"})
+     */
+    public $allowance ;
 
     public $mappings = [
         'joinDate' => 'JOIN_DATE',
@@ -174,6 +229,8 @@ class HrEmployeesFormTabFour extends Model {
         'payEmpType' => 'PAY_EMP_TYPE',
         'wohFlag' => 'WOH_FLAG',
         'overtimeEligible' => 'OVERTIME_ELIGIBLE',
+        'groupId' => 'GROUP_ID',
+        'allowance' => 'ALLOWANCE',
     ];
 
 }

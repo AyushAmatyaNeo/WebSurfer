@@ -20,6 +20,9 @@ $this->headScript()
     document.pullEmployeeListForEmployeeTableLink = '<?= $this->url("employee", ["action" => "pullEmployeeListForEmployeeTable"]) ?>';
     document.acl =<?php echo json_encode($acl); ?>;
     document.employeeDetail =<?php echo json_encode($employeeDetail); ?>;
+    document.braProv = <?php echo json_encode($braProv);?>;
+    document.excelExportWithImageLink = '<?= $this->url("employee", ["action" => "excelExport"]) ?>';
+    document.excelExportWithImageDownload = '<?php echo $this->basePath('uploads/Employees_List.xlsx'); ?>';
 </script>
 
 <div class="page-bar">
@@ -69,6 +72,10 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                         <li >
                             <a href="javascript:;" id="pdfExport">
                                 <i class="fa fa-file-pdf-o" ></i> Export to PDF </a>
+                        </li>
+                        <li >
+                            <a href="javascript:;" id="excelExportWithImage">
+                                <i class="fa fa-file-excel-o" ></i> Export to Excel Image</a>
                         </li>
                     </ul>
                 </div>
@@ -139,6 +146,19 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                     </select>
                 </div>
             </div>
+            <?php if($preference['provinceWiseBranchFilter'] == 'Y') {?>
+                <div class="row margin-top-10">
+                    <div class="col-sm-2">
+                        <label>Province</label>
+                        <select class="form-control reset-field" name="province[]" id="province">
+                            <option>-----</option>
+                            <?php foreach($provinces as $key => $value ){?>
+                                <option value='<?=$key?>'><?=$value?></option>
+                            <?php  }?>
+                        </select>
+                    </div>
+                </div>
+            <?php } ?>
             <div class="row margin-top-10">
                 <div class="col-sm-4 col-sm-offset-8">
                     <button id="reset" class="btn default btn-sm pull-right hris-reset-btn ">

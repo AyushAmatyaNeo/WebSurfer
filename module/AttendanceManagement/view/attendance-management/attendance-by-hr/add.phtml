@@ -108,7 +108,7 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                     <div class="col-sm-4">
                         <div class="form-group <?= empty($inTime->getMessages()) ? "" : "error" ?>">
                             <?php print $this->formLabel($inTime) ?>
-                            <span class="required" aria-required="true">*</span>
+                            <!-- <span class="required" aria-required="true">*</span> -->
                             <div class="input-group dropdown-select">
                                 <?php print $this->formElement($inTime) ?>
                             </div>
@@ -121,12 +121,13 @@ if ($this->messages && (sizeof($this->messages) > 1)) {
                             <div class="col-sm-8">
                                 <div class="form-group <?= empty($outTime->getMessages()) ? "" : "error" ?>">
                                     <?php print $this->formLabel($outTime) ?>
-                                    <span class="required" aria-required="true">*</span>
+                                    <!-- <span class="required" aria-required="true">*</span> -->
                                     <div class="input-group dropdown-select">
                                         <?php print $this->formElement($outTime) ?>
                                     </div>
                                 </div>
                                 <?php print $this->formElementErrors()->render($outTime, ['class' => 'help-block error']); ?>
+                            <label><input type="checkbox" value="Y" name='nextDay'>Next Day</label>
                             </div>
                             <div class="col-sm-4">
                                 <div class="form-group <?= empty($totalHour->getMessages()) ? "" : "error" ?>">

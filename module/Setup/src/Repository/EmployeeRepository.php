@@ -147,6 +147,7 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                 ->join(['RG' => "HRIS_RELIGIONS"], "E." . HrEmployees::RELIGION_ID . "=RG.RELIGION_ID", ['RELIGION_NAME' => new Expression('INITCAP(RG.RELIGION_NAME)')], 'left')
                 ->join(['CN' => "HRIS_COUNTRIES"], "E." . HrEmployees::COUNTRY_ID . "=CN.COUNTRY_ID", ['COUNTRY_NAME' => new Expression('INITCAP(CN.COUNTRY_NAME)')], 'left')
                 ->join(['VM' => "HRIS_VDC_MUNICIPALITIES"], "E." . HrEmployees::ADDR_PERM_VDC_MUNICIPALITY_ID . "=VM.VDC_MUNICIPALITY_ID", ['VDC_MUNICIPALITY_NAME' => new Expression('INITCAP(VM.VDC_MUNICIPALITY_NAME)')], 'left')
+                ->join(['DI' => "HRIS_DISTRICTS"], "E." . HrEmployees::ID_CITIZENSHIP_ISSUE_PLACE . "=DI.DISTRICT_ID", ['CITIZENSHIP_ISSUE_PLACE' => new Expression('INITCAP(DI.DISTRICT_NAME)')], 'left')
                 ->join(['VM1' => "HRIS_VDC_MUNICIPALITIES"], "E." . HrEmployees::ADDR_TEMP_VDC_MUNICIPALITY_ID . "=VM1.VDC_MUNICIPALITY_ID", ['VDC_MUNICIPALITY_NAME_TEMP' => 'VDC_MUNICIPALITY_NAME'], 'left')
                 ->join(['D1' => Department::TABLE_NAME], "E." . HrEmployees::DEPARTMENT_ID . "=D1." . Department::DEPARTMENT_ID, ['DEPARTMENT_NAME' => new Expression('(D1.DEPARTMENT_NAME)')], 'left')
                 ->join(['DES1' => Designation::TABLE_NAME], "E." . HrEmployees::DESIGNATION_ID . "=DES1." . Designation::DESIGNATION_ID, ['DESIGNATION_TITLE' => new Expression('(DES1.DESIGNATION_TITLE)')], 'left')
@@ -360,7 +361,25 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
 
     public function edit(Model $model, $id) {
         $tempArray = $model->getArrayCopyForDB();
+        if($tempArray['WOH_FLAG'] == null){
+            $tempArray['WOH_FLAG'] = $this->getWohRewardFromPosition($tempArray['POSITION_ID'])['WOH_FLAG'];
+        }
         $this->tableGateway->update($tempArray, ['EMPLOYEE_ID' => $id]);
+    }
+
+    public function getWohRewardFromPosition($positionId) {
+
+        if($positionId == null){
+            return;
+        }
+
+        $sql = "SELECT WOH_FLAG
+                    FROM HRIS_POSITIONS
+                    WHERE 
+                    POSITION_ID = {$positionId}";
+        $statement = $this->adapter->query($sql);
+        $result = $statement->execute();
+        return $result->current();
     }
 
     public function branchEmpCount() {
@@ -646,7 +665,8 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                   FUNL.FUNCTIONAL_LEVEL_EDESC                                       AS FUNCTIONAL_LEVEL_EDESC,
                   E.SALARY                                                          AS SALARY,
                   E.SALARY_PF                                                       AS SALARY_PF,
-                  E.REMARKS                                                         AS REMARKS
+                  E.REMARKS                                                         AS REMARKS,
+                  E.Allowance                                                       AS ALLOWANACE
                 FROM HRIS_EMPLOYEES E
                 LEFT JOIN HRIS_COMPANY C
                 ON E.COMPANY_ID=C.COMPANY_ID
@@ -1023,6 +1043,53 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
         $sql = "BEGIN
                   HRIS_UPDATE_JOB_HISTORY({$employeeId});
                 END;";
+        $statement = $this->adapter->query($sql);
+        $statement->execute();
+    }
+
+    public function updateServiceStatus($data) {
+
+        $sql = "INSERT INTO HRIS_JOB_HISTORY (
+                JOB_HISTORY_ID,
+                EMPLOYEE_ID,
+                START_DATE,
+                END_DATE,
+                SERVICE_EVENT_TYPE_ID,
+                TO_BRANCH_ID,
+                TO_DEPARTMENT_ID,
+                TO_DESIGNATION_ID,
+                TO_POSITION_ID,
+                TO_SERVICE_TYPE_ID,
+                STATUS,
+                CREATED_BY,
+                CREATED_DT,
+                TO_COMPANY_ID,
+                TO_SALARY,
+                RETIRED_FLAG,
+                DISABLED_FLAG,
+                EVENT_DATE
+              )
+              VALUES
+              (
+                (SELECT MAX(JOB_HISTORY_ID)+1 FROM HRIS_JOB_HISTORY),
+                {$data->employeeId},
+                '{$data->startDate}',
+                '{$data->endDate}',
+                {$data->serviceEventTypeId},
+                {$data->branchId},
+                {$data->departmentId},
+                {$data->designationId},
+                {$data->positionId},
+                {$data->serviceTypeId},
+                'E',
+                {$data->createdBy},
+                TRUNC(SYSDATE),
+                (select company_id from hris_employees where employee_id={$data->employeeId}),
+                {$data->salary},
+                'N',
+                'N',
+                '{$data->eventDate}')";
+
         $statement = $this->adapter->query($sql);
         $statement->execute();
     }
@@ -1408,7 +1475,7 @@ GROUP BY IARA.EMPLOYEE_ID) AA ON (AA.EMPLOYEE_ID=E.EMPLOYEE_ID)
                 LEFT JOIN HRIS_FUNCTIONAL_LEVELS FUNL
                 ON E.FUNCTIONAL_LEVEL_ID=FUNL.FUNCTIONAL_LEVEL_ID
                 {$joinIfSyngery}
-                WHERE 1=1 AND (E.RETIRED_FLAG = 'Y' OR E.RESIGNED_FLAG = 'Y')
+                WHERE 1=1 AND (E.RETIRED_FLAG = 'Y' OR E.RESIGNED_FLAG = 'Y' OR E.STATUS='D')
                 {$condition}
                 {$orderByString}";
                 

@@ -21,6 +21,8 @@ use Setup\Model\HrEmployees;
 use Zend\Authentication\Storage\StorageInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\View\Model\JsonModel;
+use Application\Model\FiscalYear;
+use Application\Model\Months;
 
 class SalarySheetController extends HrisController {
 
@@ -184,10 +186,10 @@ class SalarySheetController extends HrisController {
             $salarySheetDetail = new SalarySheetDetail();
             $salarySheetDetail->sheetNo = $sheetNo;
             $salarySheetDetail->employeeId = $employeeId;
-
+            
             foreach ($returnData['ruleValueKV'] as $key => $value) {
                 $salarySheetDetail->payId = $key;
-                $salarySheetDetail->val = $value;
+                $salarySheetDetail->val =($value>0)?$value:0;
                 $salarySheetDetailRepo->add($salarySheetDetail);
             }
 
@@ -419,6 +421,72 @@ class SalarySheetController extends HrisController {
             return new JsonModel(['success' => true, 'data' => $employeeList, 'message' => null]);
         } catch (Exception $e) {
             return new JsonModel(['success' => false, 'data' => null, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function payValueModifiedModernAction() {
+        $data['getSearchDataLink'] = $this->url()->fromRoute('salarySheet', ['action' => 'getSearchData']);
+        $data['getGroupListLink'] = $this->url()->fromRoute('salarySheet', ['action' => 'getGroupList']);
+        $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME]);
+        $payrollRepo = new PayrollRepository($this->adapter);
+        $employeeList = $payrollRepo->fetchEmployeeList();
+        $months = EntityHelper::getTableList($this->adapter, Months::TABLE_NAME, [Months::MONTH_ID, Months::MONTH_EDESC, Months::FISCAL_YEAR_ID],null,'','FISCAL_YEAR_MONTH_NO');
+        $rulesRepo = new RulesRepository($this->adapter);
+        $payHeads = $rulesRepo->fetchSSRules();
+        
+        return $this->stickFlashMessagesTo([
+            'payHeads' => $payHeads,
+            'fiscalYears' => $fiscalYears,
+            'months' => $months,
+            'data' => $data,
+            'salaryTypes' => iterator_to_array($this->salarySheetRepo->fetchAllSalaryType(), false),
+            'employees' => $employeeList,
+            'acl' => $this->acl 
+        ]);
+    }
+
+    public function getPayValueDetailAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postData = $request->getPost();
+            $payId = $_POST['payHeadId'];
+            $pivotString = '';
+            for($i = 0; $i < count($payId); $i++){
+                if($i != 0){ $pivotString.=','; }
+                $pivotString.= $payId[$i].' AS H_'.$payId[$i];
+            }
+            $sspvmRepo = new SSPayValueModifiedRepo($this->adapter);
+            $data = $sspvmRepo->modernFilter($postData['monthId'], $postData['companyId'], $postData['groupId'], $pivotString, $postData['employeeId'], $postData['salaryTypeId']);
+            $columns = $sspvmRepo->getColumns($_POST['payHeadId']);
+            return new JsonModel(['success' => true, 'data' => Helper::extractDbData($data), 'columns' => Helper::extractDbData($columns), 'error' => '']);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function postPayValueDetailAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postedData = $request->getPost();
+            $data = $postedData['data'];
+            $monthId = $_POST['monthId'];
+            $salaryTypeId = $_POST['salaryTypeId'];
+            $detailRepo = new SSPayValueModifiedRepo($this->adapter);
+            foreach($data as $item){
+                if($item['employeeId'] == null || $item['employeeId'] == ''){
+                    continue;
+                }
+                $detailRepo->setModifiedPayValue($item, $monthId, $salaryTypeId);
+            }
+            return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
         }
     }
 

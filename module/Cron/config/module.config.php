@@ -4,6 +4,7 @@ namespace Cron;
 
 use Application\Controller\ControllerFactory;
 use Cron\Controller\Cron;
+use Cron\Controller\BottlersCron;
 use Zend\Router\Http\Segment;
 
 return [

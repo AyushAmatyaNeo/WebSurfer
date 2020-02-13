@@ -5,11 +5,11 @@
        
         var $employeeTable = $('#employeeTable');
         var $search = $('#search');
-    
 
-        app.initializeKendoGrid($employeeTable, [
+        var columns = [
             {field: "EMPLOYEE_CODE", title: "Code", locked: true, width: 80},
             {field: "FULL_NAME", title: "Full Name", locked: true, width: 110},
+            {field: "SERVICE_DURATION", title: "Service Duration", locked: true, width: 130},
             {field: "FUNCTIONAL_TYPE_EDESC", title: "Functional Type", width: 120},
             {field: "DEPARTMENT_NAME", title: "Department", width: 100},
             {field: "DESIGNATION_TITLE", title: "Designation", width: 100},
@@ -17,50 +17,66 @@
             {field: "DOB", title: "BirthDate",  width: 100},
             {field: "AGE", title: "Age", width: 130},
             {field: "DOJ", title: "JoinDate", width: 100},
-            {field: "SERVICE_DURATION", title: "Service Duration", width: 130},
             {field: "SERVICE_TYPE_NAME", title: "Service Type", width: 100},
-            {field: "BASIC", title: "Basic", width: 100},
-            {field: "GRADE", title: "Grade", width: 100},
+            {field: "SALARY", title: "Salary", width: 100},
             {field: "ALLOWANCE", title: "Allowance", width: 100},
-            {field: "GROSS", title: "Gross", width: 100},
-            /*{field: "LEVEL_NO", title: "Level", width: 150},
-            {field: "LOCATION_EDESC", title: "Location", width: 150},
-            {field: "FUNCTIONAL_TYPE_EDESC", title: "Functional Type", width: 150},
-            {field: "FUNCTIONAL_LEVEL_EDESC", title: "Functional Level", width: 150}*/
-        ], null, null, null, 'Job Duration Report.xlsx');
+            {field: "GROSS", title: "Gross", width: 100}
+        ];
+
+        app.initializeKendoGrid($employeeTable, columns, null, null, null, 'Job Duration Report.xlsx');
 
         app.searchTable('employeeTable', ['EMPLOYEE_CODE', 'FULL_NAME'], false);
   
         var map = {
-            'EMPLOYEE_ID': 'Employee Id',
             'EMPLOYEE_CODE': 'Employee Code',
             'FULL_NAME': 'Employee',
-            'FUNCTIONAL_TYPE_EDESC': 'Functional Type',
             'DEPARTMENT_NAME': 'Department',
-            'POSITION_NAME': 'Position',
-            'BIRTH_DATE_AD': 'BirthDate',
+            'DESIGNATION_TITLE': 'Designation',
+            'GRADE': 'Grade',
+            'DOB': 'BirthDate',
+            'DOJ': 'JoinDate',
             'AGE': 'Age',
-            'JOIN_DATE_AD': 'JoinDate',
             'SERVICE_DURATION': 'Service Duration',
             'SERVICE_TYPE_NAME': 'Service Type',
-            'BASIC': 'Basic',
-            'GRADE': 'Grade',
-            'ALLOWANCE': 'Alowance',
-            'GROSS': 'Gross',
+            'FUNCTIONAL_TYPE_EDESC': 'Functional Type',
+            'POSITION_NAME': 'Position',
+            'SALARY': 'Basic',
+            'ALLOWANCE': 'Allowance',
+            'GROSS': 'Gross'
         }; 
 
+        var exportColumnParameters = [];
+        for(var key in map){
+            exportColumnParameters.push({'VALUES' : key, 'COLUMNS' : map[key]});
+        }
+        var $exparams = $('#exparamsId');
+        app.populateSelect($exparams, exportColumnParameters, 'VALUES', 'COLUMNS');
+        $exparams.val(Object.keys(map));
+
         $('#excelExport').on('click', function () {
-            app.excelExport($employeeTable, map, 'Birthday Employee List.xlsx');        
+            var fc = app.filterExportColumns($("#exparamsId").val(), map);
+            app.excelExport($employeeTable, fc, 'Job Duration Report.xlsx');
         });
         $('#pdfExport').on('click', function () {
-            app.exportToPDF($employeeTable, map, 'Birthday Employee List.pdf');
+            var fc = app.filterExportColumns($("#exparamsId").val(), map);
+            app.exportToPDF($employeeTable, fc, 'Job Duration Report.pdf');
         });
        
         $search.on('click', function () {
             var data = document.searchManager.getSearchValues();
             app.serverRequest(document.pullEmployeeListForEmployeeTableLink, data).then(function (response) {
                 if (response.success) {
-                    console.log(response);
+                    $employeeTable.empty();
+                    var columnParameters = $exparams.val();
+                    var columns_bk = [];
+                    for(let i = 0; i < columns.length; i++){
+                        for(let j = 0; j < columnParameters.length; j++){
+                            if(columns[i].field == columnParameters[j]){
+                                columns_bk.push(columns[i]);
+                            }
+                        }
+                    }
+                    app.initializeKendoGrid($employeeTable, columns_bk, null, null, null, 'Job Duration Report.xlsx');
                     app.renderKendoGrid($employeeTable, response.data);
                 } else {
                     app.showMessage(response.error, 'error');
@@ -69,10 +85,5 @@
                 app.showMessage(error, 'error');
             });  
         });
-        
-//        $("#reset").on("click", function () {
-//            $(".form-control").val("");
-//            document.searchManager.reset();
-//        });
     }); 
 })(window.jQuery, window.app);
