@@ -57,15 +57,14 @@ class Whereabouts extends HrisController {
                 $updateData = array();
                 $updateData['isChecked'] = $list['isChecked'];
                 $updateData['orderBy'] = $list['orderBy'];
-
+                $this->repository->updateStatus($employeeId);
                 if($updateData['isChecked'] == 'true'){
-                    $this->repository->updateWhereabouts($employeeId, $updateData);
+                $this->repository->updateWhereabouts($employeeId, $updateData);
                 }
             }
 
             return new JsonModel([
                 "success" => true,
-//                    "data" => $list,
                 "message" => null,
             ]);
         } catch (Exception $e) {

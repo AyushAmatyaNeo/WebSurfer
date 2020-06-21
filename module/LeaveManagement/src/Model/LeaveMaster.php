@@ -44,6 +44,10 @@ class LeaveMaster extends Model {
     const HOLIDAY_AS_LEAVE = "HOLIDAY_AS_LEAVE";
     const APPLY_LIMIT = "APPLY_LIMIT";
     const HR_ONLY = "HR_ONLY";
+    const ENABLE_OVERRIDE = "ENABLE_OVERRIDE";
+    const LEAVE_YEAR = "LEAVE_YEAR";
+    const OLD_LEAVE = "OLD_LEAVE";
+    const VIEW_ORDER = "VIEW_ORDER";
 
 
     public $leaveId;
@@ -83,6 +87,10 @@ class LeaveMaster extends Model {
     public $holidayAsLeave;
     public $applyLimit;
     public $hrOnly;
+    public $enableOverride;
+    public $leaveYear;
+    public $oldLeave;
+    public $viewOrder;
     public $mappings = [
         'leaveId' => self::LEAVE_ID,
         'leaveCode' => self::LEAVE_CODE,
@@ -121,6 +129,10 @@ class LeaveMaster extends Model {
         'holidayAsLeave' => self::HOLIDAY_AS_LEAVE,
         'applyLimit' => self::APPLY_LIMIT,
         'hrOnly' => self::HR_ONLY,
+        'enableOverride' => self::ENABLE_OVERRIDE,
+        'leaveYear' => self::LEAVE_YEAR,
+        'oldLeave' => self::OLD_LEAVE,
+        'viewOrder' => self::VIEW_ORDER
     ];
 
 }

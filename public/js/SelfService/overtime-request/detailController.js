@@ -26,30 +26,12 @@
 
                     var diff1 = (tim_i - tim_o) / 60000; //dividing by seconds and milliseconds
                     if (startTime.includes('PM') && endTime.includes('AM')) {
-                     diff1=1440-diff1;  
+                     diff1=1440-diff1;
                     }
                     var diff = Math.abs(diff1);
                     return diff;
                 }
                 
-              //  // FOR SHIVAM CEMENT TO ENTER OVERTIME MANUALLY
-//                $scope.totalCalculateHour = function (totalHour) {
-//                    
-//                    var hour = 0;
-//                    var minute = 0;
-//                    if (totalHour != null) {
-//                        if (totalHour.includes(":")){
-//                            hour = Number(totalHour.split(":")[0]);
-//                            minute = Number(totalHour.split(":")[1]);
-//                        } else {
-//                            hour = Number(totalHour);
-//                            
-//                        }
-//                    }
-//
-//                    var totalMinutes = (hour * 60) + minute;
-//                    return totalMinutes;
-//                }
 
                 $scope.sumAllTotalHour = function (list) {
                     var total = 0;

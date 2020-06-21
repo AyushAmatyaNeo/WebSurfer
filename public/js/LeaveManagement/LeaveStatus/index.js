@@ -9,6 +9,7 @@
         var $bulkActionDiv = $('#bulkActionDiv');
         var $bulkBtns = $(".btnApproveReject");
         var $superpower = $("#super_power");
+        var $leaveYear = $('#leaveYear');
 
         $.each(document.searchManager.getIds(), function (key, value) {
             $('#' + value).select2();
@@ -16,6 +17,7 @@
 
         $leave.select2();
         $status.select2();
+        $leaveYear.select2();
 
         var columns = [ 
             {field: "EMPLOYEE_CODE", title: "Code"},
@@ -49,10 +51,15 @@
             {field: "HALF_DAY_DETAIL", title: "Type"},
             {field: "STATUS", title: "Status"},
             {field: "ID", title: "Action", template: `
-            <span>                                  
+            <span class="clearfix">                             
                 <a class="btn  btn-icon-only btn-success" href="${document.viewLink}/#: ID #" style="height:17px; width:13px" title="view">
                 <i class="fa fa-search-plus"></i>
+                </a> 
+                #if(SHOW_LEAVE_FORM =='Y'){#
+                <a class="btn  btn-icon-only btn-success" href="${document.lfcLink}/#: ID #" style="height:17px; width:13px" title="view">
+                <i class="fa fa-search"></i>
                 </a>
+                #}# 
             </span>`}
         ];
         columns = app.prependPrefColumns(columns);
@@ -98,6 +105,7 @@
             q['fromDate'] = $('#fromDate').val();
             q['toDate'] = $('#toDate').val();
             q['recomApproveId'] = $('#recomApproveId').val();
+            q['leaveYear'] = $leaveYear.val();
             App.blockUI({target: "#hris-page-content"});
             app.pullDataById(document.pullLeaveRequestStatusListLink, q).then(function (success) {
                 App.unblockUI("#hris-page-content");
@@ -128,6 +136,13 @@
             }, function (data, error) {
 
             });
+        });
+        
+        
+        $leaveYear.on('change', function () {
+            let selectedLeaveYear = $(this).val();
+            let leaveList = document.allLeaveForReport[selectedLeaveYear];
+            app.populateSelect($leave, leaveList, 'LEAVE_ID', 'LEAVE_ENAME', 'All Leaves', -1, -1);
         });
         
 

@@ -9,6 +9,25 @@
                 </a>
             </div>
         `;
+        
+         var rowTemplateString = "<tr  class='#: (PRI_SEC=='SECONDARY')  ? 'bg-primary' : '' #' data-uid='#: uid #'>" +
+          "<td><input type='checkbox' id='#:ID#' role-id='#:ROLE#'  class='k-checkbox row-checkbox'><label class='k-checkbox-label' for='#:ID#'></label></td>" +
+          "<td>#: EMPLOYEE_CODE #</td>" +
+          "<td>#: FULL_NAME #</td>" +
+          "<td>#: LEAVE_ENAME #</td>" +
+          "<td>#: APPLIED_DATE_AD #</td>" +
+          "<td>#: APPLIED_DATE_BS #</td>" +
+          "<td>#: START_DATE_AD #</td>" +
+          "<td>#: START_DATE_BS #</td>" +
+          "<td>#: END_DATE_AD #</td>" +
+          "<td>#: END_DATE_BS #</td>" +
+          "<td>#: HALF_DAY_DETAIL #</td>" +
+          "<td>#: GRACE_PERIOD_DETAIL #</td>" +
+          "<td>#: NO_OF_DAYS #</td>" +
+          "<td>#: STATUS_DETAIL #</td>" +
+          "<td>"+action+"</td>" +
+          "</tr>";
+        
         app.initializeKendoGrid($table, [
             {
                 title: 'Select All',
@@ -52,7 +71,7 @@
             {field: "NO_OF_DAYS", title: "Duration"},
             {field: "STATUS_DETAIL", title: "Status"},
             {field: ["ID", "ROLE"], title: "Action", template: action}
-        ], null, null, null, 'Leave Request');
+        ], null, null, {rowTemplate : rowTemplateString}, 'Leave Request');
 
 
         app.pullDataById('', {}).then(function (response) {
@@ -73,24 +92,25 @@
         app.searchTable($table, ['EMPLOYEE_NAME', 'EMPLOYEE_CODE']);
         var exportMap = {
             'EMPLOYEE_CODE': 'Code',
-            'EMPLOYEE_NAME': 'Employee Name',
+            'FULL_NAME': 'Employee Name',
             'LEAVE_ENAME': 'Leave',
-            'REQUESTED_DT_AD': 'Requested Date(AD)',
-            'REQUESTED_DT_BS': 'Requested Date(BS)',
-            'FROM_DATE_AD': 'Start Date(AD)',
-            'FROM_DATE_BS': 'Start Date(BS)',
-            'TO_DATE_AD': 'End Date(AD)',
-            'TO_DATE_BS': 'End Date(BS)',
+            'APPLIED_DATE_AD': 'Requested Date(AD)',
+            'APPLIED_DATE_BS': 'Requested Date(BS)',
+            'START_DATE_AD': 'Start Date(AD)',
+            'START_DATE_BS': 'Start Date(BS)',
+            'END_DATE_AD': 'End Date(AD)',
+            'END_DATE_BS': 'End Date(BS)',
             'HALF_DAY_DETAIL': 'Day Interval',
             'GRACE_PERIOD_DETAIL': 'Grace',
             'STATUS_DETAIL': 'Status',
             'REMARKS': 'Remarks',
-            'RECOMMENDER_NAME': 'Recommender',
+            'RECOMMENDED_BY': 'Recommended By',
             'RECOMMENDED_DT': 'Recommended Date',
             'RECOMMENDED_REMARKS': 'Recommender Remarks',
-            'APPROVER_NAME': 'Approver',
-            'APPROVED_DT': 'Aprroved Date',
-            'APPROVED_REMARKS': 'Approver Remarks'
+            'YOUR_ROLE': 'Your Role'
+            // 'APPROVED_BY': 'Approver By',
+            // 'APPROVED_DT': 'Aprroved Date',
+            // 'APPROVED_REMARKS': 'Approver Remarks'
         };
         $('#excelExport').on('click', function () {
             app.excelExport($table, exportMap, 'Leave Request List');
@@ -149,9 +169,5 @@
             });
         });
 
-//        $("#reset").on("click", function () {
-//            $(".form-control").val("");
-//            $("#fromDate").val("");
-//        });
     });
 })(window.jQuery, window.app);

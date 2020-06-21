@@ -5,10 +5,20 @@ namespace LeaveManagement\Form;
 use Zend\Form\Annotation;
 
 /**
- * @Annotation\Hydrator("Zend\Hydrator\ObjectProperty")
+ * @Annotation\Hydrator("Zend\Hydrator\ObjectPropertyHydrator")
  * @Annotation\Name("LeaveMaster")
  */
 class LeaveMasterForm {
+    
+    /**
+     * @Annotation\Type("Zend\Form\Element\Text")
+     * @Annotation\Required(false)
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"Leave Code"})
+     * @Annotation\Attributes({ "id":"leaveCode", "class":"form-control" })
+     * @Annotation\Validator({"name":"StringLength", "options":{"max":"15"}})
+     */
+    public $leaveCode;
 
     /**
      * @Annotation\Type("Zend\Form\Element\Text")
@@ -194,7 +204,25 @@ class LeaveMasterForm {
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
      * @Annotation\Options({"value_options":{"Y":"Yes","N":"No"},"label":"HR only"})
      * @Annotation\Required(false)
-     * @Annotation\Attributes({ "id":"hrOnly","value":"Y"})
+     * @Annotation\Attributes({ "id":"hrOnly","value":"N"})
      */
     public $hrOnly;
+
+    /**
+     * @Annotation\Type("Zend\Form\Element\Radio")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"value_options":{"Y":"Yes","N":"No"},"label":"Enable Override"})
+     * @Annotation\Required(false)
+     * @Annotation\Attributes({ "id":"enableOverride","value":"N"})
+     */
+    public $enableOverride;
+    
+    /**
+     * @Annotation\Type("Zend\Form\Element\Number")
+     * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
+     * @Annotation\Options({"label":"View Order"})
+     * @Annotation\Required(false)
+     * @Annotation\Attributes({ "id":"viewOrder", "class":"form-control"})
+     */
+    public $viewOrder;
 }

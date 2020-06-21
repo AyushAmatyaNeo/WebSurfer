@@ -147,7 +147,11 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                 ->join(['RG' => "HRIS_RELIGIONS"], "E." . HrEmployees::RELIGION_ID . "=RG.RELIGION_ID", ['RELIGION_NAME' => new Expression('INITCAP(RG.RELIGION_NAME)')], 'left')
                 ->join(['CN' => "HRIS_COUNTRIES"], "E." . HrEmployees::COUNTRY_ID . "=CN.COUNTRY_ID", ['COUNTRY_NAME' => new Expression('INITCAP(CN.COUNTRY_NAME)')], 'left')
                 ->join(['VM' => "HRIS_VDC_MUNICIPALITIES"], "E." . HrEmployees::ADDR_PERM_VDC_MUNICIPALITY_ID . "=VM.VDC_MUNICIPALITY_ID", ['VDC_MUNICIPALITY_NAME' => new Expression('INITCAP(VM.VDC_MUNICIPALITY_NAME)')], 'left')
-                ->join(['DI' => "HRIS_DISTRICTS"], "E." . HrEmployees::ID_CITIZENSHIP_ISSUE_PLACE . "=DI.DISTRICT_ID", ['CITIZENSHIP_ISSUE_PLACE' => new Expression('INITCAP(DI.DISTRICT_NAME)')], 'left')
+                ->join(['DI' => "HRIS_DISTRICTS"], "to_char(E." . HrEmployees::ID_CITIZENSHIP_ISSUE_PLACE . ")=to_char(DI.DISTRICT_ID)", ['CITIZENSHIP_ISSUE_PLACE' =>
+                    new Expression('case when regexp_like(ID_CITIZENSHIP_ISSUE_PLACE, \'^\d+(\.\d+)?$\') 
+                        then di.district_name
+                        else ID_CITIZENSHIP_ISSUE_PLACE
+                        end')], 'left')
                 ->join(['VM1' => "HRIS_VDC_MUNICIPALITIES"], "E." . HrEmployees::ADDR_TEMP_VDC_MUNICIPALITY_ID . "=VM1.VDC_MUNICIPALITY_ID", ['VDC_MUNICIPALITY_NAME_TEMP' => 'VDC_MUNICIPALITY_NAME'], 'left')
                 ->join(['D1' => Department::TABLE_NAME], "E." . HrEmployees::DEPARTMENT_ID . "=D1." . Department::DEPARTMENT_ID, ['DEPARTMENT_NAME' => new Expression('(D1.DEPARTMENT_NAME)')], 'left')
                 ->join(['DES1' => Designation::TABLE_NAME], "E." . HrEmployees::DESIGNATION_ID . "=DES1." . Designation::DESIGNATION_ID, ['DESIGNATION_TITLE' => new Expression('(DES1.DESIGNATION_TITLE)')], 'left')
@@ -580,8 +584,9 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                 ON(FCAS.ACC_CODE=E.ID_ACC_CODE AND C.COMPANY_CODE=FCAS.COMPANY_CODE)";
         }
 
-
-        $condition = EntityHelper::getSearchConditon($by['companyId'], $by['branchId'], $by['departmentId'], $by['positionId'], $by['designationId'], $by['serviceTypeId'], $by['serviceEventTypeId'], $by['employeeTypeId'], $by['employeeId'], $by['genderId'], $by['locationId'], $by['functionalTypeId']);
+        $boundedParameter=[];
+        $condition = EntityHelper::getSearchConditonBounded($by['companyId'], $by['branchId'], $by['departmentId'], $by['positionId'], $by['designationId'], $by['serviceTypeId'], $by['serviceEventTypeId'], $by['employeeTypeId'], $by['employeeId'], $by['genderId'], $by['locationId'], $by['functionalTypeId']);
+        $boundedParameter=array_merge($boundedParameter,$condition['parameter']);
         $sql = "SELECT 
             {$columIfSynergy}
                 E.ID_ACCOUNT_NO  AS ID_ACCOUNT_NO,
@@ -666,7 +671,8 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                   E.SALARY                                                          AS SALARY,
                   E.SALARY_PF                                                       AS SALARY_PF,
                   E.REMARKS                                                         AS REMARKS,
-                  E.Allowance                                                       AS ALLOWANACE
+                  E.Allowance                                                       AS ALLOWANACE,
+                  EF.FILE_PATH
                 FROM HRIS_EMPLOYEES E
                 LEFT JOIN HRIS_COMPANY C
                 ON E.COMPANY_ID=C.COMPANY_ID
@@ -710,11 +716,14 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
                 ON E.FUNCTIONAL_TYPE_ID=FUNT.FUNCTIONAL_TYPE_ID
                 LEFT JOIN HRIS_FUNCTIONAL_LEVELS FUNL
                 ON E.FUNCTIONAL_LEVEL_ID=FUNL.FUNCTIONAL_LEVEL_ID
+                LEFT JOIN HRIS_EMPLOYEE_FILE EF 
+                ON (EF.FILE_CODE=E.PROFILE_PICTURE_ID)
                 {$joinIfSyngery}
                 WHERE 1                 =1 AND E.STATUS='E' 
-                {$condition}
+                {$condition['sql']}
                 {$orderByString}";
-        return $this->rawQuery($sql);
+                
+        return $this->rawQuery($sql,$boundedParameter);
     }
 
     public function getEmployeeListOfBirthday() {
@@ -885,6 +894,9 @@ class EmployeeRepository extends HrisRepository implements RepositoryInterface {
     }
 
     public function employeeDetailSession($id) {
+        if(!$id){
+            return [];
+        }
         $sql = "
                 SELECT E.EMPLOYEE_ID                                                AS EMPLOYEE_ID,
                   E.COMPANY_ID                                                      AS COMPANY_ID,

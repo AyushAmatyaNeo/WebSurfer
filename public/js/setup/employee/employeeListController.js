@@ -39,6 +39,10 @@
         };
         app.initializeKendoGrid($employeeTable, [
             {field: "EMPLOYEE_CODE", title: "Code", locked: true, width: 70},
+            {field: "IMAGE_FULL_PATH", title: "Photo", locked: true, width: 70,
+                template: "<div class = 'employee-photo' " +
+                    "style='background-image: url(#:IMAGE_FULL_PATH#);'></div>"
+                    },
             {field: "FULL_NAME", title: "Full Name", locked: true, width: 150},
             {field: "MOBILE_NO", title: "Mobile No", locked: true, width: 100},
             {title: "Birth Date", locked: true, columns: [
@@ -137,9 +141,11 @@
         });
 
         $('#excelExportWithImage').on('click', function () {
+            let searchData = document.searchManager.getSearchValues();
             var data = {
-                exportData : exportData,
-                map : map
+                searchData : searchData,
+//                exportData : exportData,
+                map : map,
             };
             app.serverRequest(document.excelExportWithImageLink, data).then(function(response){
                 window.open(document.excelExportWithImageDownload);
@@ -148,9 +154,13 @@
 
         $search.on('click', function () {
             var data = document.searchManager.getSearchValues();
+            var imagePath = document.basePath + '/uploads/';
             app.serverRequest(document.pullEmployeeListForEmployeeTableLink, data).then(function (response) {
                 if (response.success) {
                     exportData = response.data;
+                    for ( var x in response.data) {
+                    response.data[x]['IMAGE_FULL_PATH'] = imagePath + response.data[x]['FILE_PATH'];
+                    }
                     app.renderKendoGrid($employeeTable, response.data);
                 } else {
                     app.showMessage(response.error, 'error');
