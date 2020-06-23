@@ -59,7 +59,7 @@ $eveningFrom= new dateTime('16:30');
 $eveningTo= new dateTime('17:30');
 // $currTime= new dateTime('10:30');
 
-// if(($currTime < $morningFrom || $currTime > $morningTo)  &&  ($currTime < $eveningFrom || $currTime > $eveningTo) || $type=='admin' ){	
+ if(($currTime < $morningFrom || $currTime > $morningTo)  &&  ($currTime < $eveningFrom || $currTime > $eveningTo) || $type=='admin' ){	
 
 ?>
 <div class="form-group">
@@ -75,15 +75,15 @@ $eveningTo= new dateTime('17:30');
 </div>
 
 <?php
-// }
+ }
 ?>
 
 <div class="form-actions">
     <div class="pull-left">
         <?php
-	//if (($currTime < $morningFrom || $currTime > $morningTo) && ($currTime < $eveningFrom || $currTime > $eveningTo) || $type == 'admin') {
+	if (($currTime < $morningFrom || $currTime > $morningTo) && ($currTime < $eveningFrom || $currTime > $eveningTo) || $type == 'admin') {
             print $this->formSubmit($submit);
-     //   }
+        }
         ?>
     </div>
     <div class="pull-right" <?php if(!($preference->allowSystemAttendance == 'Y')) {
@@ -93,7 +93,7 @@ $eveningTo= new dateTime('17:30');
     </div>
 </div>
         <?php
-	//	if(($currTime < $morningFrom || $currTime > $morningTo)  &&  ($currTime < $eveningFrom || $currTime > $eveningTo) || $type=='admin' ){	
+		if(($currTime < $morningFrom || $currTime > $morningTo)  &&  ($currTime < $eveningFrom || $currTime > $eveningTo) || $type=='admin' ){	
         ?>
 <div class="form-actions ">
     <div class="pull-left">
@@ -106,6 +106,6 @@ $eveningTo= new dateTime('17:30');
     </div>
 </div>
 <?php
-//		}
+		}
 print $this->form()->closeTag();
 ?>
