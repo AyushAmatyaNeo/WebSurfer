@@ -31,6 +31,7 @@ class RulesRepository extends HrisRepository {
         $query = "SELECT PAY_ID,
                   PAY_CODE,
                   PAY_EDESC,
+                  REPLACE(PAY_EDESC, ' ', '_') AS PAY_EDESC_WITH_UNDERSCORE,
                   PAY_TYPE_FLAG,
                   (
                   CASE
@@ -109,17 +110,20 @@ class RulesRepository extends HrisRepository {
                   INITCAP(P.PAY_EDESC) AS PAY_EDESC,
                   INITCAP(P.PAY_LDESC) AS PAY_LDESC
                 FROM HRIS_PAY_SETUP P";
+                return $this->rawQuery($sql);
         } else {
             $sql = "
                 SELECT P.PAY_ID,
                   INITCAP(P.PAY_EDESC) AS PAY_EDESC,
                   INITCAP(P.PAY_LDESC) AS PAY_LDESC
                 FROM HRIS_PAY_SETUP P,
-                  (SELECT PRIORITY_INDEX FROM HRIS_PAY_SETUP WHERE PAY_ID=$payId
+                  (SELECT PRIORITY_INDEX FROM HRIS_PAY_SETUP WHERE PAY_ID=:payId
                   ) PS
                 WHERE P.PRIORITY_INDEX < PS.PRIORITY_INDEX";
+                $boundedParameter = [];
+                $boundedParameter['payId'] = $payId;
+                return $this->rawQuery($sql, $boundedParameter);
         }
-        return $this->rawQuery($sql);
     }
 
     public function fetchSSRules(): array {
@@ -137,6 +141,7 @@ class RulesRepository extends HrisRepository {
         $query = "SELECT PS.PAY_ID,
                   PS.PAY_CODE,
                   PS.PAY_EDESC,
+                  REPLACE(UPPER(PAY_EDESC), ' ', '_') AS PAY_EDESC_WITH_UNDERSCORE,
                   PS.PAY_TYPE_FLAG,
                   (
                   CASE
@@ -191,12 +196,47 @@ class RulesRepository extends HrisRepository {
                   ,PSS.FORMULA AS TYPE_FORMULA
                   ,PSS.FLAG AS TYPE_FLAG
                 FROM HRIS_PAY_SETUP PS
-                left join (select SALARY_TYPE_ID from Hris_Salary_Sheet where sheet_no={$sheetNo}) SS on (1=1)
+                left join (select SALARY_TYPE_ID from Hris_Salary_Sheet where sheet_no=:sheetNo) SS on (1=1)
                 LEFT JOIN HRIS_PAY_SETUP_SPECIAL PSS ON (PSS.SALARY_TYPE_ID=SS.SALARY_TYPE_ID AND PS.PAY_ID=PSS.PAY_ID)
                 WHERE PS.STATUS ='E' ORDER BY PRIORITY_INDEX";
 
+        $boundedParameter = [];
+        $boundedParameter['sheetNo'] = $sheetNo;
+
         $statement = $this->adapter->query($query);
-        return $statement->execute();
+        return $statement->execute($boundedParameter);
+    }
+    
+    public function fetchPreviousSumVal($employeeId,$monthId) {
+        $boundedParameter = [];
+        $boundedParameter['employeeId'] = $employeeId;
+        $boundedParameter['monthId'] = $monthId;
+        $query="select 
+ '[PS:'||REPLACE(UPPER(ps.PAY_EDESC), ' ', '_')||']' as PAY_EDESC,
+  sd.pay_id,
+ case when 
+ sd.value is not null
+ then sd.value
+ else 0 
+ end
+ as value 
+ from (select 
+        ssd.pay_id,
+        nvl(sum(ssd.val),0) as value
+        from 
+        Hris_Salary_Sheet_Emp_Detail  ssed
+        join Hris_Month_Code mc on (mc.month_id=ssed.month_id and 
+        mc.FISCAL_YEAR_ID=(select FISCAL_YEAR_ID from Hris_Month_Code where MONTH_ID=:monthId) 
+        AND EMPLOYEE_ID=:employeeId)
+        join Hris_Salary_Sheet_Detail ssd on (ssed.sheet_no=ssd.sheet_no and ssed.employee_id=ssd.employee_id )
+        where 
+        ssed.month_id<:monthId 
+        group by ssd.pay_id
+          ) sd
+          right join HRIS_PAY_SETUP ps on ( sd.PAY_ID=ps.PAY_ID)";
+        $statement = $this->adapter->query($query);
+        return $statement->execute($boundedParameter);
+        
     }
 
 }

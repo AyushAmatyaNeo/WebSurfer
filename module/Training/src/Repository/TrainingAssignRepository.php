@@ -12,12 +12,13 @@ use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\Sql\Expression;
 use Zend\Db\Sql\Sql;
 use Zend\Db\TableGateway\TableGateway;
+use Application\Repository\HrisRepository;
 use Application\Helper\EntityHelper;
 
-class TrainingAssignRepository implements RepositoryInterface {
+class TrainingAssignRepository extends HrisRepository implements RepositoryInterface {
 
-    private $tableGateway;
-    private $adapter;
+    protected $tableGateway;
+    protected $adapter;
 
     public function __construct(AdapterInterface $adapter) {
         $this->tableGateway = new TableGateway(TrainingAssign::TABLE_NAME, $adapter);
@@ -30,11 +31,15 @@ class TrainingAssignRepository implements RepositoryInterface {
     }
 
     public function delete($id) {
-        $this->tableGateway->update([TrainingAssign::STATUS => 'D'], [TrainingAssign::EMPLOYEE_ID . "=$id[0]", TrainingAssign::TRAINING_ID . " =$id[1]"]);
-        EntityHelper::rawQueryResult($this->adapter, "BEGIN  HRIS_TRAINING_LEAVE_REWARD({$id[0]},{$id[1]}); END;");
+        $this->tableGateway->update([TrainingAssign::STATUS => 'D'], [TrainingAssign::EMPLOYEE_ID => $id[0], TrainingAssign::TRAINING_ID => $id[1]]);
+        $boundedParameter = [];
+        $boundedParameter['id0'] = $id[0];
+        $boundedParameter['id1'] = $id[1];
+        $this->executeStatement("BEGIN  HRIS_TRAINING_LEAVE_REWARD(:id0,:id1); END;", $boundedParameter);
     }
 
     public function getDetailByEmployeeID($employeeId, $trainingId) {
+        $boundedParams = [];
         $sql = new Sql($this->adapter);
         $select = $sql->select();
         $select->columns([
@@ -52,17 +57,21 @@ class TrainingAssignRepository implements RepositoryInterface {
 
 
         $select->where([
-            "TA.EMPLOYEE_ID=" . $employeeId,
-            "TA.TRAINING_ID=" . $trainingId,
+            "TA.EMPLOYEE_ID= :employeeId",
+            "TA.TRAINING_ID= :trainingId",
             "TA.STATUS='E'"
         ]);
 
+        $boundedParams['employeeId'] = $employeeId;
+        $boundedParams['trainingId'] = $trainingId;
+
         $statement = $sql->prepareStatementForSqlObject($select);
-        $result = $statement->execute();
+        $result = $statement->execute($boundedParams);
         return $result->current();
     }
 
     public function getAllTrainingList($employeeId) {
+        $boundedParams = [];
         $sql = new Sql($this->adapter);
         $select = $sql->select();
         $select->columns([
@@ -80,15 +89,18 @@ class TrainingAssignRepository implements RepositoryInterface {
                 ->join(['I' => Institute::TABLE_NAME], "I." . Institute::INSTITUTE_ID . "=T." . Training::INSTITUTE_ID, ["INSTITUTE_NAME" => new Expression("INITCAP(I.INSTITUTE_NAME)"), Institute::LOCATION, Institute::EMAIL, Institute::TELEPHONE], "left");
 
         $select->where([
-            "TA.EMPLOYEE_ID=" . $employeeId,
-            "TA.STATUS='E'"
+            "TA.EMPLOYEE_ID = :employeeId ",
+            "TA.STATUS = 'E'"
         ]);
+
+        $boundedParams['employeeId'] = $employeeId;
         $statement = $sql->prepareStatementForSqlObject($select);
-        $result = $statement->execute();
+        $result = $statement->execute($boundedParams);
         return $result;
     }
 
     public function getAllDetailByEmployeeID($employeeId, $trainingId) {
+        $boundedParams = [];
         $sql = new Sql($this->adapter);
         $select = $sql->select();
         $select->columns([
@@ -104,32 +116,39 @@ class TrainingAssignRepository implements RepositoryInterface {
                 ->join(['I' => Institute::TABLE_NAME], "I." . Institute::INSTITUTE_ID . "=T." . Training::INSTITUTE_ID, ["INSTITUTE_NAME" => new Expression("INITCAP(I.INSTITUTE_NAME)")], "left");
 
         $select->where([
-            "TA.EMPLOYEE_ID=" . $employeeId,
-            "TA.TRAINING_ID=" . $trainingId
+            "TA.EMPLOYEE_ID= :employeeId",
+            "TA.TRAINING_ID= :trainingId"
         ]);
 
+        $boundedParams['employeeId'] = $employeeId;
+        $boundedParams['trainingId'] = $trainingId;
+
         $statement = $sql->prepareStatementForSqlObject($select);
-        $result = $statement->execute();
+        $result = $statement->execute($boundedParams);
         return $result;
     }
 
     public function filterRecords($search) {
-        $condition = "";
-        $condition = EntityHelper::getSearchConditon($search['companyId'], $search['branchId'], $search['departmentId'], $search['positionId'], $search['designationId'], $search['serviceTypeId'], $search['serviceEventTypeId'], $search['employeeTypeId'], $search['employeeId']);
+//        $condition = "";
+        $condition = EntityHelper::getSearchConditonBounded($search['companyId'], $search['branchId'], $search['departmentId'], $search['positionId'], $search['designationId'], $search['serviceTypeId'], $search['serviceEventTypeId'], $search['employeeTypeId'], $search['employeeId']);
+
+        $boundedParameter = [];
+        $boundedParameter=array_merge($boundedParameter, $condition['parameter']);
 
         if (isset($search['trainingId']) && $search['trainingId'] != null && $search['trainingId'] != -1) {
             if (gettype($search['trainingId']) === 'array') {
-                $csv = "";
-                for ($i = 0; $i < sizeof($search['trainingId']); $i++) {
-                    if ($i == 0) {
-                        $csv = "'{$search['trainingId'][$i]}'";
-                    } else {
-                        $csv .= ",'{$search['trainingId'][$i]}'";
-                    }
-                }
-                $condition .= "AND TA.TRAINING_ID IN ({$csv})";
+//                $csv = "";
+//                for ($i = 0; $i < sizeof($search['trainingId']); $i++) {
+//                    if ($i == 0) {
+//                        $csv = "'{$search['trainingId'][$i]}'";
+//                    } else {
+//                        $csv .= ",'{$search['trainingId'][$i]}'";
+//                    }
+//                }
+//                $condition['sql'] .= "AND TA.TRAINING_ID IN ({$csv})";
             } else {
-                $condition .= "AND TA.TRAINING_ID IN ('{$search['trainingId']}')";
+                $condition['sql'] .= " AND TA.TRAINING_ID IN (:trainingId)";
+                $boundedParameter['trainingId'] = $search['trainingId'];
             }
         }
  
@@ -160,12 +179,13 @@ class TrainingAssignRepository implements RepositoryInterface {
                 LEFT JOIN HRIS_EMPLOYEES E
                 ON (TA.EMPLOYEE_ID=E.EMPLOYEE_ID)
                 WHERE 1=1 AND TA.STATUS='E' 
-                {$condition} ORDER BY TMS.TRAINING_NAME,E.FULL_NAME";
-        return EntityHelper::rawQueryResult($this->adapter, $sql);
+                {$condition['sql']} ORDER BY TMS.TRAINING_NAME,E.FULL_NAME";
+
+        return $this->rawQuery($sql, $boundedParameter);
     }
 
     public function edit(Model $model, $id) {
-        $this->tableGateway->update($model->getArrayCopyForDB(), [TrainingAssign::EMPLOYEE_ID . "=$id[0]", TrainingAssign::TRAINING_ID . " =$id[1]"]);
+        $this->tableGateway->update($model->getArrayCopyForDB(), [TrainingAssign::EMPLOYEE_ID => $id[0], TrainingAssign::TRAINING_ID => $id[1]]);
         $this->leaveReward($id[0], $id[1]);
     }
 
@@ -183,18 +203,23 @@ class TrainingAssignRepository implements RepositoryInterface {
         $select->columns([TrainingAssign::TRAINING_ID]);
         $select->from(['TA' => TrainingAssign::TABLE_NAME])
                 ->join(['T' => Training::TABLE_NAME], "TA." . TrainingAssign::TRAINING_ID . " = " . "T." . Training::TRAINING_ID, []);
-        $select->where(["TA." . TrainingAssign::EMPLOYEE_ID . "=$employeeId"]);
+        $select->where(["TA." . TrainingAssign::EMPLOYEE_ID . "=:employeeId"]);
         $select->where(["TA." . TrainingAssign::STATUS . "= 'E'"]);
         $select->where([$date->getExpression() . " BETWEEN " . "T." . Training::START_DATE . " AND T." . Training::END_DATE]);
+        $boundedParams = [];
+        $boundedParams['employeeId'] = $employeeId;
         $statement = $sql->prepareStatementForSqlObject($select);
-        $result = $statement->execute();
+        $result = $statement->execute($boundedParams);
         return $result->current();
     }
     
     public function leaveReward($employeeId,$trainingId){
+        $boundedParams = [];
+        $boundedParams['employeeId'] = $employeeId;
+        $boundedParams['trainingId'] = $trainingId;
         $sql="DECLARE
-                V_EMPLOYEE_ID NUMBER(7,0):=$employeeId;
-                V_TRAINING_ID NUMBER(7,0):=$trainingId;
+                V_EMPLOYEE_ID NUMBER(7,0):= :employeeId;
+                V_TRAINING_ID NUMBER(7,0):= :trainingId;
                 V_START_DATE DATE;
                 V_END_DATE DATE;
                 V_DURATION NUMBER;
@@ -227,7 +252,9 @@ class TrainingAssignRepository implements RepositoryInterface {
                  END;
 
                 END;";
-        EntityHelper::rawQueryResult($this->adapter, $sql);
+//        $statement = $this->adapter->query($sql);
+        $this->executeStatement($sql, $boundedParams);
+        return;
     }
     
 

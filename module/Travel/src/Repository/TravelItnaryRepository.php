@@ -7,6 +7,7 @@ use Application\Repository\HrisRepository;
 use Application\Repository\RepositoryInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\TableGateway\TableGateway;
+use Application\Helper\EntityHelper;
 
 class TravelItnaryRepository extends HrisRepository implements RepositoryInterface {
     
@@ -109,22 +110,29 @@ class TravelItnaryRepository extends HrisRepository implements RepositoryInterfa
 //                ON(RA.APPROVED_BY=RAA.EMPLOYEE_ID)
 //                WHERE 1          =1 {$condition}";
         
-        
-         $condition = "";
+        $boundedParameter = [];
+        $condition = "";
         if (isset($search['fromDate']) && $search['fromDate'] != null) {
-            $condition .= " AND TI.FROM_DT>=TO_DATE('{$search['fromDate']}','DD-MM-YYYY') ";
+            $condition .= " AND TI.FROM_DT>=TO_DATE(:fromDate,'DD-MM-YYYY') ";
+            $boundedParameter['fromDate'] = $search['fromDate'];
         }
         if (isset($search['fromDate']) && $search['toDate'] != null) {
-            $condition .= " AND TI.TO_DT<=TO_DATE('{$search['toDate']}','DD-MM-YYYY') ";
+            $condition .= " AND TI.TO_DT<=TO_DATE(:toDate,'DD-MM-YYYY') ";
+            $boundedParameter['toDate'] = $search['toDate'];
         }
-        
+        $boundedParameter['employeeId'] = $search['employeeId'];
         
         $sql="
             select 
+            LEAVE_STATUS_DESC(tr.status) as TRAVEL_STATUS,
+            (case when tr.status in('C', 'R') then 'N' else 'Y' end) ALLOW_DELETE,
+            tr.REQUESTED_AMOUNT,
 TI.*,IMD.EMPLOYEE_ID_LIST,IMD.FULL_NAME_LIST
 ,TT.TRANSPORT_NAME AS TRANSPORT_TYPE_FULL_FORM
 from HRIS_TRAVEL_ITNARY TI
 LEFT JOIN HRIS_TRANSPORT_TYPES TT ON (TI.TRANSPORT_TYPE=TT.TRANSPORT_CODE)
+LEFT JOIN hris_employee_travel_request tr on (tr.employee_id = :employeeId
+    and tr.itnary_id = ti.itnary_id)
 LEFT JOIN (
 SELECT 
 IM.ITNARY_ID,
@@ -133,11 +141,12 @@ LISTAGG(IME.EMPLOYEE_CODE||'-'||IME.FULL_NAME, ','||rpad(' ',4,' ')) WITHIN GROU
 FROM HRIS_ITNARY_MEMBERS IM
 JOIN HRIS_EMPLOYEES IME ON (IM.EMPLOYEE_ID=IME.EMPLOYEE_ID )
 GROUP BY IM.ITNARY_ID ) IMD ON (IMD.ITNARY_ID=TI.ITNARY_ID)
-WHERE TI.CREATED_BY={$search['employeeId']} {$condition} 
+WHERE (TI.CREATED_BY=:employeeId or IMD.ITNARY_ID in(select ITNARY_ID from
+hris_itnary_members where EMPLOYEE_ID = :employeeId)) {$condition} 
 ";
 
         $finalSql = $this->getPrefReportQuery($sql);
-        return $this->rawQuery($finalSql);
+        return $this->rawQuery($finalSql, $boundedParameter);
     }
 
     public function notSettled(): array {
@@ -231,14 +240,21 @@ WHERE TI.CREATED_BY={$search['employeeId']} {$condition}
     public function getSameDateApprovedStatus($employeeId, $fromDate, $toDate) {
         $sql = "SELECT COUNT(*) as TRAVEL_COUNT
   FROM HRIS_EMPLOYEE_TRAVEL_REQUEST
-  WHERE (('{$fromDate}' BETWEEN FROM_DATE AND TO_DATE)
-  OR ('{$toDate}' BETWEEN FROM_DATE AND TO_DATE))
+  WHERE ((:fromDate BETWEEN FROM_DATE AND TO_DATE)
+  OR (:toDate BETWEEN FROM_DATE AND TO_DATE))
   AND STATUS  IN ('AP','CP','CR')
-  AND EMPLOYEE_ID = $employeeId
+  AND EMPLOYEE_ID = :employeeId
                 ";
-        $statement = $this->adapter->query($sql);
-        $result = $statement->execute();
-        return $result->current();
+
+        $boundedParameter = [];
+        $boundedParameter['id'] = $id;
+        $boundedParameter['fromDate'] = $fromDate;
+        $boundedParameter['toDate'] = $toDate;
+
+        return $this->rawQuery($sql, $boundedParameter)[0];     
+        // $statement = $this->adapter->query($sql);
+        // $result = $statement->execute();
+        // return $result->current();
     }
 
     public function add(Model $model) {
@@ -256,7 +272,7 @@ WHERE TI.CREATED_BY={$search['employeeId']} {$condition}
         $this->tableGatewayItnaryDetails->insert($addData);
     }
     
-    public function fetchItnary($id){
+    public function fetchItnary($id, $employeeId = null){
          $sql = "
              SELECT  
 ITNARY_ID,
@@ -266,7 +282,8 @@ INITCAP(TO_CHAR(FROM_DT, 'DD-MON-YYYY')) AS FROM_DT,
 INITCAP(TO_CHAR(FROM_DT, 'DD-MON-YYYY')) AS TO_DT,
 NO_OF_DAYS,
 PURPOSE,
-FLOAT_MONEY,
+(select requested_amount from hris_employee_travel_request where itnary_id = :id
+    and employee_id = :employeeId) float_money,
 TRANSPORT_TYPE,
 TOTAL_DAYS,
 REMARKS,
@@ -279,11 +296,18 @@ MODIFIED_DT,
 DELETED_BY,
 DELETED_DT               
 FROM HRIS_TRAVEL_ITNARY
-WHERE ITNARY_ID={$id}
+WHERE ITNARY_ID=:id
                 ";
-        $statement = $this->adapter->query($sql);
-        $result = $statement->execute();
-        return $result->current();
+
+        $boundedParameter = [];
+        $boundedParameter['id'] = $id;
+        $boundedParameter['employeeId'] = $employeeId;
+
+        return $this->rawQuery($sql, $boundedParameter)[0];
+
+        // $statement = $this->adapter->query($sql);
+        // $result = $statement->execute();
+        // return $result->current();
         
     }
     
@@ -295,11 +319,16 @@ FROM
 HRIS_ITNARY_MEMBERS IM
 LEFT JOIN HRIS_EMPLOYEES E ON (E.EMPLOYEE_ID=IM.EMPLOYEE_ID)
 LEFT JOIN HRIS_EMPLOYEE_TRAVEL_REQUEST TR ON (TR.EMPLOYEE_ID=IM.EMPLOYEE_ID AND TR.ITNARY_ID=IM.ITNARY_ID)
-WHERE IM.ITNARY_ID={$id}
+WHERE IM.ITNARY_ID=:id
                 ";
-        $statement = $this->adapter->query($sql);
-        $result = $statement->execute();
-        return Helper::extractDbData($result);
+        
+        $boundedParameter = [];
+        $boundedParameter['id'] = $id;
+
+        return $this->rawQuery($sql, $boundedParameter);
+        // $statement = $this->adapter->query($sql);
+        // $result = $statement->execute();
+        // return Helper::extractDbData($result);
         
     }
     
@@ -313,11 +342,16 @@ WHERE IM.ITNARY_ID={$id}
  FROM 
 HRIS_ITNARY_DETAILS ITD
 LEFT JOIN  HRIS_TRANSPORT_TYPES TT ON (TT.TRANSPORT_CODE=ITD.TRANSPORT_TYPE)
-WHERE ITD.ITNARY_ID={$id} ORDER BY ITD.SNO asc
+WHERE ITD.ITNARY_ID=:id ORDER BY ITD.SNO asc
                 ";
-        $statement = $this->adapter->query($sql);
-        $result = $statement->execute();
-        return Helper::extractDbData($result);
+
+        $boundedParameter = [];
+        $boundedParameter['id'] = $id;
+
+        return $this->rawQuery($sql, $boundedParameter);
+        // $statement = $this->adapter->query($sql);
+        // $result = $statement->execute();
+        // return Helper::extractDbData($result);
     }
 
     public function delete($id) {
@@ -334,6 +368,15 @@ WHERE ITD.ITNARY_ID={$id} ORDER BY ITD.SNO asc
 
     public function fetchById($id) {
         
+    }
+
+    public function cancel($id, $employeeId){
+      $sql = "UPDATE HRIS_EMPLOYEE_TRAVEL_REQUEST SET STATUS = 'C' WHERE EMPLOYEE_ID = :employeeId AND ITNARY_ID = :id";
+      $boundedParameter = [];
+      $boundedParameter['id'] = $id;
+      $boundedParameter['employeeId'] = $employeeId;
+
+      $this->rawQuery($sql, $boundedParameter);
     }
 
 }

@@ -87,9 +87,9 @@ class EntityHelper {
         return self::getTableKVList($adapter, $tableName, $key, $values, $where, $concatWith, $emptyColumn, $orderBy, $orderAs, $initCap);
     }
 
-    public static function rawQueryResult(AdapterInterface $adapter, string $sql) {
+    public static function rawQueryResult(AdapterInterface $adapter, string $sql,$boundedParameter=[]) {
         $statement = $adapter->query($sql);
-        return $statement->execute();
+        return $statement->execute($boundedParameter);
     }
 
     public static function getTableList(AdapterInterface $adapter, string $tableName, array $columnList, array $where = null, string $predicate = Predicate::OP_AND,$orderBy=null) {
@@ -349,7 +349,7 @@ class EntityHelper {
                 $sql = "{$conditonType} {$colName} = :{$tempname} ";
             }
             $returnData['sql']=$sql;
-            $returnData['parameter']=$colValue;
+            $returnData['parameter']=$parameterData;
             return $returnData;
         }
     }

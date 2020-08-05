@@ -1,5 +1,4 @@
 <?php
-
 namespace Application\Controller;
 
 use Application\Helper\Helper;
@@ -22,6 +21,7 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\Form\Annotation\AnnotationBuilder;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
+use Exception;
 
 class AuthController extends AbstractActionController {
 
@@ -103,6 +103,7 @@ class AuthController extends AbstractActionController {
         if ($request->isPost()) {
             $form->setData($request->getPost());
             if ($form->isValid()) {
+				try {
                 
                  /*
                  * To check First Time Password 
@@ -177,7 +178,7 @@ class AuthController extends AbstractActionController {
 
                     $roleRepo = new RoleSetupRepository($this->adapter);
                     $acl = $roleRepo->fetchById($resultRow->ROLE_ID);
-                    
+                    $acl['CONTROL'] = explode(',', $acl['CONTROL']);
                     $roleControlRepo = new RoleControlRepository($this->adapter);
                     $roleControlDetails = $roleControlRepo->fetchById($acl['ROLE_ID']);
                     $acl['CONTROL_VALUES']=$roleControlDetails;
@@ -216,6 +217,10 @@ class AuthController extends AbstractActionController {
                     $redirect = 'dashboard';
                 } else {
                     $this->allowLoginFor($request->getPost('username'), 5, 3600);
+                }
+				
+				} catch (Exception $e) {
+                    $this->flashmessenger()->addMessage('Login Error');
                 }
             }
         }
@@ -299,9 +304,9 @@ class AuthController extends AbstractActionController {
     }
 
     public function checkIfAccountLocked($account) {
-        if (!($this->preference->allowAccountLock == 'Y')) {
-            return false;
-        }
+//        if (!($this->preference->allowAccountLock == 'Y')) {
+//            return false;
+//        }
         if ($account->IS_LOCKED == 'Y') {
             $this->flashmessenger()->clearCurrentMessages();
             $this->flashmessenger()->addMessage('The account ' . $account->USER_NAME . ' has been locked Please contact the Admin');
