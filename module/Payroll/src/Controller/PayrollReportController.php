@@ -560,6 +560,7 @@ class PayrollReportController extends HrisController
             $result['data']['employees'] = Helper::extractDbData($resultData);
             $result['error'] = "";
             $result['companyDetail'] = $companyDetail;
+            $result['preference'] = $this->preference;
             return new CustomViewModel($result);
         } catch (Exception $e) {
             return new CustomViewModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);

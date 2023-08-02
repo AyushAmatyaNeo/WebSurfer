@@ -228,8 +228,8 @@ For Bank Information :
 
                     });
 
-                    response.data['COMPANY_NAME'] = (response.companyDetail[0]) ? response.companyDetail[0]['COMPANY_NAME'] : "Websurfer Nepal Communication System Pvt. Ltd. ";
-                    response.data['ADDRESS'] = (response.companyDetail[0]) ? response.companyDetail[0]['ADDRESS'] : "Dhumbarahi, Kathmandu";;
+                    response.data['COMPANY_NAME'] = (response.companyDetail[0]) ? response.companyDetail[0]['COMPANY_NAME'] : response.preference['companyAddress'];
+                    response.data['ADDRESS'] = (response.companyDetail[0]) ? response.companyDetail[0]['ADDRESS'] : response.preference['companyAddress'];
                     response.data['TOTAL'] = tempTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
                     console.log(response.data.employees);
                     var mustHtml = Mustache.to_html(repTemplate, response.data);
