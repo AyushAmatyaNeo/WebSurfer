@@ -196,13 +196,26 @@ class AdvanceStatus extends HrisController
             try {
                 $data = $request->getPost();
                 $id = (int) $this->params()->fromRoute('id', 0);
+
                 $paymentRepository = new AdvancePaymentRepository($this->adapter);
-                $paymentRepository->skipAdvance($data['year'], $data['month'], $id, $this->employeeId);
+                // $paymentRepository->skipAdvance($data['year'], $data['month'], $id, $this->employeeId);
                 return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
             } catch (Exception $e) {
                 return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
             }
         }
+    }
+
+    public function skipAction()
+    {
+        $id = (int) $this->params()->fromRoute('id', 0);
+        $paymentRepository = new AdvancePaymentRepository($this->adapter);
+
+        $data = $paymentRepository->getYearMonth($id);
+
+        $paymentRepository->skipAdvance($data['NEP_YEAR'], $data['NEP_MONTH'], $id, $data['ADVANCE_REQUEST_ID'], $this->employeeId);
+        // return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
+        return $this->redirect()->toRoute("advanceStatus");
     }
 
     public function bulkAction()

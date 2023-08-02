@@ -17,19 +17,23 @@ use Zend\Authentication\Storage\StorageInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\View\Model\JsonModel;
 
-class AdvanceApply extends HrisController {
+class AdvanceApply extends HrisController
+{
 
-    public function __construct(AdapterInterface $adapter, StorageInterface $storage) {
+    public function __construct(AdapterInterface $adapter, StorageInterface $storage)
+    {
         parent::__construct($adapter, $storage);
         $this->initializeRepository(AdvanceRequestRepository::class);
         $this->initializeForm(AdvanceRequestForm::class);
     }
 
-    public function indexAction() {
+    public function indexAction()
+    {
         return $this->redirect()->toRoute("advanceStatus");
     }
 
-    public function addAction() {
+    public function addAction()
+    {
         $request = $this->getRequest();
 
         if ($request->isPost()) {
@@ -56,25 +60,33 @@ class AdvanceApply extends HrisController {
                 return $this->redirect()->toRoute("advanceStatus");
             }
         }
+        $employeeListWithCode = EntityHelper::rawQueryResult($this->adapter, "SELECT
+        E.EMPLOYEE_ID,
+        E.EMPLOYEE_CODE || '-' || E.FULL_NAME AS FULL_NAME,
+        E.SALARY,
+        H.AMOUNT AS SALHISTORY
+    FROM HRIS_EMPLOYEES E
+    LEFT JOIN hris_employee_salary_history H ON H.EMPLOYEE_ID = E.EMPLOYEE_ID AND H.PAY_ID = 1 AND H.IS_ENABLE = 'Y'
+    WHERE E.STATUS = 'E' AND E.RETIRED_FLAG = 'N'");
 
-        $employeeListWithCode= EntityHelper::rawQueryResult($this->adapter, "SELECT EMPLOYEE_ID,EMPLOYEE_CODE||'-'||FULL_NAME AS FULL_NAME,SALARY FROM HRIS_EMPLOYEES WHERE STATUS='E' AND RETIRED_FLAG='N'"); 
         return Helper::addFlashMessagesToArray($this, [
-                    'form' => $this->form,
-                    'advance' => EntityHelper::getTableList($this->adapter, AdvanceSetupModel::TABLE_NAME, ['*'], [AdvanceSetupModel::STATUS => 'E']),
-                    'customRenderer' => Helper::renderCustomView(),
-                    'employeeList' => Helper::extractDbData($employeeListWithCode),
+            'form' => $this->form,
+            'advance' => EntityHelper::getTableList($this->adapter, AdvanceSetupModel::TABLE_NAME, ['*'], [AdvanceSetupModel::STATUS => 'E']),
+            'customRenderer' => Helper::renderCustomView(),
+            'employeeList' => Helper::extractDbData($employeeListWithCode),
         ]);
     }
 
-    public function pullEmployeeAdvanceAction() {
+    public function pullEmployeeAdvanceAction()
+    {
         try {
             $request = $this->getRequest();
             $employeeId = $request->getPost('employeeId');
+            $historySalary = $this->repository->getSalaryHistory($employeeId);
             $advanceList = $this->repository->fetchAvailableAdvacenList($employeeId);
-            return new JsonModel(['success' => true, 'data' => $advanceList, 'error' => '']);
+            return new JsonModel(['success' => true, 'data' => $advanceList, 'salary' => $historySalary['SALARY'], 'error' => '']);
         } catch (Exception $e) {
             return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
         }
     }
-
 }

@@ -53,6 +53,7 @@ class AdvancePaymentRepository implements RepositoryInterface
     public function getPaymentStatus($id)
     {
         $sql = "SELECT 
+            AP.ID,
             MC.MONTH_EDESC,
             AP.ADVANCE_REQUEST_ID,
             AP.AMOUNT,
@@ -73,12 +74,22 @@ class AdvancePaymentRepository implements RepositoryInterface
         return $result;
     }
 
-    public function skipAdvance($year, $month, $id, $employee_id)
+    public function getYearMonth($id)
     {
-        $maxValue = $this->getMaxYearMonth($id);
+        $sql = "select * from HRIS_EMPLOYEE_ADVANCE_PAYMENT where id=$id";
+        $statement = $this->adapter->query($sql);
+        $result = $statement->execute();
+        return $result->current();
+    }
+
+    public function skipAdvance($year, $month, $id, $advanceId, $employee_id)
+    {
+        $maxValue = $this->getMaxYearMonth($advanceId);
+        $maxAmount = $this->getMaxAmount($id);
+
         $maxYear = $maxValue['NEP_YEAR'];
         $maxMonth = $maxValue['NEP_MONTH'];
-        $amount = $maxValue['AMOUNT'];
+        $amount = $maxAmount['AMOUNT'];
         if ($maxMonth == 12) {
             $newMaxYear = $maxYear + 1;
             $newMaxMonth = 1;
@@ -92,9 +103,10 @@ class AdvancePaymentRepository implements RepositoryInterface
         $advancePayment->modifiedDate = Helper::getcurrentExpressionDate();
         $advancePayment->status = 'SK';
 
-        $this->updatePayment($advancePayment, $id, $year, $month);
+        $this->updatePayment($advancePayment, $advanceId, $year, $month);
 
-        $advancePayment->advanceRequestId = $id;
+        $advancePayment->id = (int) Helper::getMaxId($this->adapter, AdvancePayment::TABLE_NAME, AdvancePayment::ID) + 1;
+        $advancePayment->advanceRequestId = $advanceId;
         $advancePayment->createdBy = $employee_id;
         $advancePayment->status = 'PE';
         $advancePayment->amount = $amount;
@@ -106,12 +118,21 @@ class AdvancePaymentRepository implements RepositoryInterface
         $this->add($advancePayment);
     }
 
-    public function getMaxYearMonth($id)
+    public function getMaxYearMonth($advanceId)
     {
         $sql = "SELECT * FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT
-                WHERE NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id) 
-            AND NEP_MONTH=(SELECT MAX(NEP_MONTH) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id AND NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id))
-            AND ADVANCE_REQUEST_ID=$id";
+                WHERE NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$advanceId) 
+            AND NEP_MONTH=(SELECT MAX(NEP_MONTH) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$advanceId AND NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$advanceId))
+            AND ADVANCE_REQUEST_ID=$advanceId";
+        $statement = $this->adapter->query($sql);
+
+        $result = $statement->execute();
+        return $result->current();
+    }
+
+    public function getMaxAmount($id)
+    {
+        $sql = "SELECT * FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT  WHERE  id=$id";
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
         return $result->current();
