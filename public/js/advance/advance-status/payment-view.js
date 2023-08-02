@@ -12,18 +12,39 @@
             </div>
         #}#
         `;
-
+        var actiontemplateConfig = {
+            update: {
+                'ALLOW_UPDATE': document.acl.ALLOW_UPDATE,
+                'params': ["NEP_YEAR", "NEP_MONTH"],
+                'url': document.editLink
+            },
+            delete: {
+                'ALLOW_DELETE': 'N',
+                'params': ["NEP_YEAR", "NEP_MONTH"],
+                'url': document.deleteLink
+            }
+        };
 
         var columns = [
-            {field: "NEP_YEAR", title: "Year", width: 150},
-            {field: "MONTH_EDESC", title: "Month", width: 150},
-            {field: "AMOUNT", title: "Amount", width: 150},
-            {field: "STATUS_DESC", title: "Status", width: 150},
-            {field: "PAYAMENT_DATE", title: "Payment Date", width: 150},
-            {field: "PAYMENT_MODE_DESC", title: "Payment Mode", width: 150},
-            {field: ["NEP_YEAR", "NEP_MONTH"], title: "Action", template: action}
+            { field: "NEP_YEAR", title: "Year", width: 150 },
+            { field: "MONTH_EDESC", title: "Month", width: 150 },
+            { field: "AMOUNT", title: "Amount", width: 150 },
+            { field: "STATUS_DESC", title: "Status", width: 150 },
+            { field: ["NEP_YEAR", "NEP_MONTH"], title: "Action", width: 80, template: app.genKendoActionTemplate(actiontemplateConfig) },
+            { field: "PAYAMENT_DATE", title: "Payment Date", width: 150 },
+            { field: "PAYMENT_MODE_DESC", title: "Payment Mode", width: 150 }
+            // { field: ["NEP_YEAR", "NEP_MONTH"], title: "Action", template: action }
 
         ];
+        $(document).on('click', '.btn-edit', function () {
+            var val = $(this).parent().siblings(":nth-of-type(7)").text();
+            if (val == 0) {
+                return confirm("Are you sure you want to revert the skip this month?") ? true : false;
+            }
+            else {
+                return confirm("Are you sure to skip loan payment this month?") ? true : false;
+            }
+        });
         var map = {
             'NEP_YEAR': 'Year',
             'MONTH_EDESC': 'Month',
@@ -55,7 +76,7 @@
         $table.on('click', '.skipMonth', function () {
             var selectedYear = $(this).attr('year');
             var selectMonth = $(this).attr('month');
-            app.pullDataById(document.skipAdvance, {year: selectedYear, month: selectMonth}).then(function (response) {
+            app.pullDataById(document.skipAdvance, { year: selectedYear, month: selectMonth }).then(function (response) {
                 console.log(response.data);
                 App.unblockUI("#hris-page-content");
                 window.location.reload(true);

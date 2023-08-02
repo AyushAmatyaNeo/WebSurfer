@@ -9,44 +9,49 @@ use Application\Repository\RepositoryInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\TableGateway\TableGateway;
 
-class AdvancePaymentRepository implements RepositoryInterface {
+class AdvancePaymentRepository implements RepositoryInterface
+{
 
     private $adapter;
     private $tableGateway;
 
-    public function __construct(AdapterInterface $adapter) {
+    public function __construct(AdapterInterface $adapter)
+    {
         $this->tableGateway = new TableGateway(AdvancePayment::TABLE_NAME, $adapter);
         $this->adapter = $adapter;
     }
 
-    public function add(Model $model) {
+    public function add(Model $model)
+    {
         $this->tableGateway->insert($model->getArrayCopyForDB());
     }
 
-    public function delete($id) {
-        
+    public function delete($id)
+    {
     }
 
-    public function edit(Model $model, $id) {
-        
+    public function edit(Model $model, $id)
+    {
     }
 
-    public function fetchAll() {
-        
+    public function fetchAll()
+    {
     }
 
-    public function fetchById($id) {
-        
+    public function fetchById($id)
+    {
     }
 
-    public function getMonthCode($date) {
+    public function getMonthCode($date)
+    {
         $sql = "SELECT * FROM HRIS_MONTH_CODE WHERE '" . $date . "' between FROM_DATE AND TO_DATE";
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
         return $result->current();
     }
 
-    public function getPaymentStatus($id) {
+    public function getPaymentStatus($id)
+    {
         $sql = "SELECT 
             MC.MONTH_EDESC,
             AP.ADVANCE_REQUEST_ID,
@@ -68,7 +73,8 @@ class AdvancePaymentRepository implements RepositoryInterface {
         return $result;
     }
 
-    public function skipAdvance($year, $month, $id, $employee_id) {
+    public function skipAdvance($year, $month, $id, $employee_id)
+    {
         $maxValue = $this->getMaxYearMonth($id);
         $maxYear = $maxValue['NEP_YEAR'];
         $maxMonth = $maxValue['NEP_MONTH'];
@@ -100,7 +106,8 @@ class AdvancePaymentRepository implements RepositoryInterface {
         $this->add($advancePayment);
     }
 
-    public function getMaxYearMonth($id) {
+    public function getMaxYearMonth($id)
+    {
         $sql = "SELECT * FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT
                 WHERE NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id) 
             AND NEP_MONTH=(SELECT MAX(NEP_MONTH) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id AND NEP_YEAR=(SELECT MAX(NEP_YEAR) FROM HRIS_EMPLOYEE_ADVANCE_PAYMENT WHERE ADVANCE_REQUEST_ID=$id))
@@ -110,8 +117,8 @@ class AdvancePaymentRepository implements RepositoryInterface {
         return $result->current();
     }
 
-    public function updatePayment(Model $model, $id, $year, $month) {
+    public function updatePayment(Model $model, $id, $year, $month)
+    {
         $this->tableGateway->update($model->getArrayCopyForDB(), [AdvancePayment::ADVANCE_REQUEST_ID => $id, AdvancePayment::NEP_YEAR => $year, AdvancePayment::NEP_MONTH => $month]);
     }
-
 }

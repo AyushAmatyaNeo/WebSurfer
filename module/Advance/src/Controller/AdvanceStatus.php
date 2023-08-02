@@ -147,6 +147,7 @@ class AdvanceStatus extends HrisController
         $advancePayment->status = 'PE';
 
         for ($i = 1; $i <= $actualPyamentMonths; $i++) {
+            $advancePayment->id = (int) Helper::getMaxId($this->adapter, AdvancePayment::TABLE_NAME, AdvancePayment::ID) + 1;
             $advancePayment->amount = ($requestedAmt > $monthlyDedeuctionAmt) ? $monthlyDedeuctionAmt : $requestedAmt;
             $advancePayment->nepYear = $nepYear;
             $advancePayment->nepMonth = $nepMonth;
