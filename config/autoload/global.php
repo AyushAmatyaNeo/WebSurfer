@@ -4,19 +4,19 @@ return [
     'db' => [
         'driver' => 'oci8',
         'connection_string' => '(DESCRIPTION =
-        (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.0.37)(PORT = 1521))
+        (ADDRESS = (PROTOCOL = TCP)(HOST = 10.255.0.103)(PORT = 1521))
         (CONNECT_DATA =
         (SERVER = DEDICATED)
-        (SERVICE_NAME = HRIS)
+        (SERVICE_NAME = orcl)
         )
         )',
-        
-  
-   'username' => 'NBB7778',
-    'password' => 'NBB',
-      
 
-        
+
+        'username' => 'WEBSURFER_LOCALS',
+        'password' => 'WEBSURFER_LOCALS',
+
+
+
         'platform_options' => ['quote_identifiers' => false]
     ],
     'service_manager' => [

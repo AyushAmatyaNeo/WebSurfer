@@ -9,35 +9,38 @@ use Application\Repository\RepositoryInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Application\Repository\HrisRepository;
 
-class PayrollReportRepo extends HrisRepository implements RepositoryInterface {
+class PayrollReportRepo extends HrisRepository implements RepositoryInterface
+{
 
     protected $adapter;
 
-    public function __construct(AdapterInterface $adapter) {
+    public function __construct(AdapterInterface $adapter)
+    {
         $this->adapter = $adapter;
     }
 
-    public function add(Model $model) {
-        
+    public function add(Model $model)
+    {
     }
 
-    public function delete($id) {
-        
+    public function delete($id)
+    {
     }
 
-    public function edit(Model $model, $id) {
-        
+    public function edit(Model $model, $id)
+    {
     }
 
-    public function fetchAll() {
-        
+    public function fetchAll()
+    {
     }
 
-    public function fetchById($id) {
-        
+    public function fetchById($id)
+    {
     }
 
-    public function getVarianceColumns() {
+    public function getVarianceColumns()
+    {
         $data['previous'] = $this->varianceColumnsPre();
         $data['current'] = $this->varianceColumnsCur();
         $data['difference'] = $this->varianceColumnsDif();
@@ -45,25 +48,29 @@ class PayrollReportRepo extends HrisRepository implements RepositoryInterface {
         return $data;
     }
 
-    public function varianceColumnsPre() {
+    public function varianceColumnsPre()
+    {
         $sql = "select 'V'||Variance_Id||'_P'  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E' and Show_Default='Y' AND VARIABLE_TYPE='V'  order by order_no asc ";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
 
-    public function varianceColumnsCur() {
+    public function varianceColumnsCur()
+    {
         $sql = "select 'V'||Variance_Id||'_C'  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E' and Show_Default='Y' AND VARIABLE_TYPE='V'  order by order_no asc ";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
 
-    public function varianceColumnsDif() {
+    public function varianceColumnsDif()
+    {
         $sql = "select 'V'||Variance_Id||'_D'  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E' and Show_Default='Y' and Show_Difference='Y' AND VARIABLE_TYPE='V' order by order_no asc ";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
-    
-    public function varianceColumnsAddi() {
+
+    public function varianceColumnsAddi()
+    {
         $sql = "SELECT
 variance_id
 ,
@@ -87,7 +94,8 @@ WHERE
         return Helper::extractDbData($data);
     }
 
-    public function getVarianceReprot($data) {
+    public function getVarianceReprot($data)
+    {
         $varianceVariable = $this->fetchVarianceVariable();
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
@@ -101,15 +109,15 @@ WHERE
         $genderId = isset($data['genderId']) ? $data['genderId'] : -1;
         $functionalTypeId = isset($data['functionalTypeId']) ? $data['functionalTypeId'] : -1;
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
-        
+
         $monthId = $data['monthId'];
-        
-        
-        $boundedParameter=[];
-        $boundedParameter['monthId']=$monthId;
+
+
+        $boundedParameter = [];
+        $boundedParameter['monthId'] = $monthId;
         $searchCondition = EntityHelper::getSearchConditonBounded($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
-        
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
+
 
         $sql = "SELECT 
             E.FULL_NAME,
@@ -198,10 +206,11 @@ WHERE
                 LEFT JOIN HRIS_FUNCTIONAL_TYPES FUNT ON (E.FUNCTIONAL_TYPE_ID=FUNT.FUNCTIONAL_TYPE_ID)
             WHERE 1=1 AND VARY.EMPLOYEE_ID IS NOT NULL {$searchCondition['sql']}
             ";
-        return EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+        return EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
     }
 
-    public function getGbVariables() {
+    public function getGbVariables()
+    {
         $sql = "select VARIANCE_ID,VARIANCE_NAME from Hris_Variance 
 where status='E' 
 AND VARIABLE_TYPE='O'
@@ -210,7 +219,8 @@ AND Show_Default='N'";
         return Helper::extractDbData($data);
     }
 
-    public function getGradeBasicReport($data) {
+    public function getGradeBasicReport($data)
+    {
         $varianceVariable = $this->fetchOtVariable();
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
@@ -225,12 +235,12 @@ AND Show_Default='N'";
         $functionalTypeId = isset($data['functionalTypeId']) ? $data['functionalTypeId'] : -1;
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
         $monthId = $data['monthId'];
-//        $fiscalId = $data['fiscalId'];
-        
-        $boundedParameter=[];
-        $boundedParameter['monthId']=$monthId;
+        //        $fiscalId = $data['fiscalId'];
+
+        $boundedParameter = [];
+        $boundedParameter['monthId'] = $monthId;
         $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
 
 
         $sql = "SELECT 
@@ -273,10 +283,11 @@ AND Show_Default='N'";
              {$searchCondition['sql']}
              ";
 
-        return EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+        return EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
     }
 
-    private function fetchVarianceVariable() {
+    private function fetchVarianceVariable()
+    {
         $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where  SHOW_DEFAULT='Y' AND STATUS='E' AND VARIABLE_TYPE='V'");
         $dbArray = "";
         foreach ($rawList as $key => $row) {
@@ -289,7 +300,8 @@ AND Show_Default='N'";
         return $dbArray;
     }
 
-    private function fetchOtVariable() {
+    private function fetchOtVariable()
+    {
         $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE='O'");
         $dbArray = "";
         foreach ($rawList as $key => $row) {
@@ -302,19 +314,22 @@ AND Show_Default='N'";
         return $dbArray;
     }
 
-    public function otDefaultColumns() {
+    public function otDefaultColumns()
+    {
         $sql = "select 'V'||Variance_Id  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E'
 and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
 
-    public function getOtDefaultColumns() {
+    public function getOtDefaultColumns()
+    {
         $data = $this->otDefaultColumns();
         return $data;
     }
 
-    public function getBasicMonthly($data, $defaultColumnsList) {
+    public function getBasicMonthly($data, $defaultColumnsList)
+    {
         // to calculate total start
         $totalString = "0";
         $colCount = 0;
@@ -323,7 +338,7 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
                 $totalString .= "+CASE WHEN BS.{$columns['DEFAULT_COL']} IS NOT NULL THEN BS.{$columns['DEFAULT_COL']} ELSE 0 END";
             } else {
                 $colCount++;
-//                $totalString .= " AS {$columns['DEFAULT_COL']},";
+                //                $totalString .= " AS {$columns['DEFAULT_COL']},";
                 $totalString .= ($colCount == $columns['TOTAL_NO']) ? " AS {$columns['DEFAULT_COL']}," : " AS {$columns['DEFAULT_COL']},0";
             }
         }
@@ -344,10 +359,10 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
 
         $varianceVariable = $this->fetchOtVariableMonthly();
         $monthIdList = $this->fetchMonthIdList($fiscalId);
-        
+
         $searchCondition = EntityHelper::getSearchConditonBounded($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
         $boundedParameter = [];
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
 
         $sql = "
              select 
@@ -424,7 +439,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $this->rawQuery($sql, $boundedParameter);
     }
 
-    private function fetchOtVariableMonthly() {
+    private function fetchOtVariableMonthly()
+    {
         $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE='O' and Show_Default='Y'");
         $dbArray['VARIABLES'] = "";
         $dbArray['VARIABLES_MAX'] = "";
@@ -440,10 +456,11 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $dbArray;
     }
 
-    private function fetchMonthIdList($fiscalId) {
+    private function fetchMonthIdList($fiscalId)
+    {
         $boundedParameter = [];
         $boundedParameter['fiscalId'] = $fiscalId;
-        $rawList = EntityHelper::rawQueryResult($this->adapter, "select month_id from hris_month_code where Fiscal_Year_Id=:fiscalId",$boundedParameter);
+        $rawList = EntityHelper::rawQueryResult($this->adapter, "select month_id from hris_month_code where Fiscal_Year_Id=:fiscalId", $boundedParameter);
         $monthArray = "";
         foreach ($rawList as $key => $row) {
             if ($key == sizeof($rawList)) {
@@ -455,7 +472,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $monthArray;
     }
 
-    public function getOtMonthlyDefaultColumns($fiscalId) {
+    public function getOtMonthlyDefaultColumns($fiscalId)
+    {
         $sql = "SELECT 'M'||MONTH_ID||'_V'||V.VARIANCE_ID AS DEFAULT_COL,
                 CASE WHEN YEAR!='TOTAL'
                 THEN
@@ -490,7 +508,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return Helper::extractDbData($rawList);
     }
 
-    public function getGradeBasicSummary($data) {
+    public function getGradeBasicSummary($data)
+    {
         $varianceVariable = $this->fetchOtVariable();
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
@@ -504,13 +523,13 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $genderId = isset($data['genderId']) ? $data['genderId'] : -1;
         $functionalTypeId = isset($data['functionalTypeId']) ? $data['functionalTypeId'] : -1;
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
-//        $fiscalId = $data['fiscalId'];
+        //        $fiscalId = $data['fiscalId'];
         $monthId = $data['monthId'];
         $extraMonth = $data['extraMonth'];
 
         $searchCondition = EntityHelper::getSearchConditonBounded($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
         $boundedParameter = [];
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
         $boundedParameter['extraMonth'] = $extraMonth;
         $boundedParameter['monthId'] = $monthId;
 
@@ -556,7 +575,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $this->rawQuery($sql, $boundedParameter);
     }
 
-    public function getSpecialMonthly($data) {
+    public function getSpecialMonthly($data)
+    {
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
         $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
         $departmentId = isset($data['departmentId']) ? $data['departmentId'] : -1;
@@ -576,7 +596,7 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
 
         $searchCondition = EntityHelper::getSearchConditonBounded($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
         $boundedParameter = [];
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
         $boundedParameter['monthId'] = $monthId;
 
         $sql = "SELECT ROWNUM AS S_NO, HLSED.ACCOUNT_NO, HLSED.FULL_NAME, (
@@ -602,7 +622,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $this->rawQuery($sql, $boundedParameter);
     }
 
-    public function getSalaryGroupColumns($type, $default = null) {
+    public function getSalaryGroupColumns($type, $default = null)
+    {
         $defaultString = " ";
         if ($default != null) {
             $defaultString = "AND Show_Default='{$default}'";
@@ -615,8 +636,10 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return Helper::extractDbData($data);
     }
 
-    public function getGroupReport($variableType, $data) {
+    public function getGroupReport($variableType, $data)
+    {
         $variable = $this->fetchSalaryGroupVariable($variableType);
+        $variableSelector = $this->fetchSalaryGroupVariableSelector($variableType, 'GB');
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
         $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
@@ -631,16 +654,16 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
         $monthId = $data['monthId'];
         $salaryTypeId = $data['salaryTypeId'];
-//        $fiscalId = $data['fiscalId'];
+        //        $fiscalId = $data['fiscalId'];
         $boundedParameter = [];
-        $strSalaryType=" ";
-        if($salaryTypeId!=null && $salaryTypeId!=-1){
-        $strSalaryType=" WHERE SALARY_TYPE_ID=:salaryTypeId";
-        $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        $strSalaryType = " ";
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " WHERE SALARY_TYPE_ID=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
         }
-        
+
         $searchCondition = EntityHelper::getSearchConditonBounded($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
         $boundedParameter['monthId'] = $monthId;
 
         $sql = "SELECT 
@@ -648,12 +671,16 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
             E.EMPLOYEE_CODE
             ,E.ID_PAN_NO
             ,E.ID_ACCOUNT_NO
+			,BA.BANK_NAME
             ,BR.BRANCH_NAME
             ,E.BIRTH_DATE
             ,E.JOIN_DATE
             ,D.DEPARTMENT_NAME
             ,FUNT.FUNCTIONAL_TYPE_EDESC
-            ,GB.*
+            ,$variableSelector
+            ,GB.EMPLOYEE_ID
+            ,GB.Month_ID
+            ,GB.SHEET_NO
             ,SSED.SERVICE_TYPE_NAME
             ,SSED.DESIGNATION_TITlE
             ,SSED.POSITION_NAME
@@ -681,19 +708,22 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
                 LEFT JOIN Hris_Salary_Sheet_Emp_Detail SSED ON 
     (SSED.SHEET_NO=GB.SHEET_NO AND SSED.EMPLOYEE_ID=GB.EMPLOYEE_ID AND SSED.MONTH_ID=GB.MONTH_ID)
                 LEFT JOIN HRIS_DEPARTMENTS D  ON (D.DEPARTMENT_ID=E.DEPARTMENT_ID)
+				LEFT JOIN HRIS_BANKS BA ON (E.BANK_ID=BA.BANK_ID)
                 LEFT JOIN HRIS_FUNCTIONAL_TYPES FUNT ON (E.FUNCTIONAL_TYPE_ID=FUNT.FUNCTIONAL_TYPE_ID)
                 LEFT JOIN HRIS_BRANCHES BR ON ( E.BRANCH_ID=BR.BRANCH_ID)
                 WHERE 1=1 
              {$searchCondition['sql']}
-             ";
+              order by  E.SENIORITY_LEVEL asc";
+        // print_r($sql);
 
         return $this->rawQuery($sql, $boundedParameter);
     }
 
-    private function fetchSalaryGroupVariable($variableType) {
+    private function fetchSalaryGroupVariable($variableType)
+    {
         $boundedParameter = [];
         $boundedParameter['variableType'] = $variableType;
-        $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE=:variableType order by order_no",$boundedParameter);
+        $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE=:variableType order by order_no", $boundedParameter);
         $dbArray = "";
         foreach ($rawList as $key => $row) {
             if ($key == sizeof($rawList)) {
@@ -705,14 +735,16 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $dbArray;
     }
 
-    public function getDefaultColumns($type) {
+    public function getDefaultColumns($type)
+    {
         $sql = "select 'V'||Variance_Id  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E'
         and Show_Default='Y'  AND VARIABLE_TYPE='{$type}' order by order_no";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
 
-    public function getGroupDetailReport($data) {
+    public function getGroupDetailReport($data)
+    {
 
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
@@ -728,23 +760,23 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
         $monthId = $data['monthId'];
         $salaryTypeId = $data['salaryTypeId'];
-//        $fiscalId = $data['fiscalId'];
-        
+        //        $fiscalId = $data['fiscalId'];
+
         $boundedParameter = [];
-        $strSalaryType=" ";
-        if($salaryTypeId!=null && $salaryTypeId!=-1){
-        $strSalaryType=" WHERE SALARY_TYPE_ID=:salaryTypeId";
-        $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        $strSalaryType = " ";
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " WHERE SALARY_TYPE_ID=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
         }
-        
+
         $groupVariable = $data['groupVariable'];
         $variable = $this->fetchGroupDetailVariable($groupVariable);
 
-//        print_r($variable);
-//        die();
+        //        print_r($variable);
+        //        die();
 
         $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
         $boundedParameter['monthId'] = $monthId;
 
         $sql = "SELECT 
@@ -792,11 +824,13 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
                 
              {$searchCondition['sql']}
              ";
+        // echo '<pre>';print_r($sql);die;
 
-        return EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+        return EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
     }
 
-    public function getVarianceDetailColumns($varianceId) {
+    public function getVarianceDetailColumns($varianceId)
+    {
         $sql = "select 
             'V'||vp.pay_id  as VARIANCE,ps.pay_edesc as VARIANCE_NAME
             from 
@@ -810,7 +844,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         //return Helper::extractDbData($data);
     }
 
-    private function fetchGroupDetailVariable($varianceId) {
+    private function fetchGroupDetailVariable($varianceId)
+    {
         $boundedParameter = [];
         $boundedParameter['varianceId'] = $varianceId;
         $sql = "select 
@@ -819,7 +854,7 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         Hris_Variance_Payhead vp
         left join Hris_Pay_Setup ps on (vp.pay_id=ps.pay_id)
         where variance_id=:varianceId";
-        $rawList = EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+        $rawList = EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
         $dbArray = "";
         foreach ($rawList as $key => $row) {
             if ($key == sizeof($rawList)) {
@@ -831,7 +866,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $dbArray;
     }
 
-    public function fetchMonthlySummary($type, $data) {
+    public function fetchMonthlySummary($type, $data)
+    {
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
         $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
@@ -846,18 +882,18 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
         $monthId = $data['monthId'];
         $salaryTypeId = $data['salaryTypeId'];
-        
-        $boundedParameter=[];
-        $boundedParameter['monthId']=$monthId;
+
+        $boundedParameter = [];
+        $boundedParameter['monthId'] = $monthId;
         $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
-        
-        $strSalaryType=" ";
-        if($salaryTypeId!=null && $salaryTypeId!=-1){
-        $strSalaryType=" and ss.Salary_Type_Id=:salaryTypeId";
-        $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
+
+        $strSalaryType = " ";
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " and ss.Salary_Type_Id=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
         }
-        
+
         $sql = "SELECT 
             PS.PAY_ID,PS.PAY_CODE,PS.PAY_EDESC,PS.PAY_TYPE_FLAG
             ,CASE WHEN SUM(SD.VAL) IS NULL THEN 0 ELSE SUM(SD.VAL) END AS TOTAL
@@ -868,19 +904,20 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
             WHERE PS.PAY_Type_flag='{$type}'
              {$searchCondition['sql']} 
             GROUP BY PS.PAY_ID,PS.PAY_CODE,PS.PAY_EDESC,PS.PAY_TYPE_FLAG";
-             
-             
-        $result = EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+
+
+        $result = EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
         return Helper::extractDbData($result);
     }
 
-    public function pulldepartmentWise($data) {
+    public function pulldepartmentWise($data)
+    {
 
         $salarySheetRepo = new SalarySheetDetailRepo($this->adapter);
 
         $in = $salarySheetRepo->fetchPayIdsAsArray();
 
-        $departmentId = (isset($data['departmentId']) && $data['departmentId'] != -1 ) ? $data['departmentId'] : null;
+        $departmentId = (isset($data['departmentId']) && $data['departmentId'] != -1) ? $data['departmentId'] : null;
         $monthId = $data['monthId'];
 
         $othersList = array();
@@ -888,7 +925,7 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $departmentList = $this->fetchDepartmentList($departmentId);
         $counter = 0;
         foreach ($departmentList as $dep) {
-            $tempVal = $this->getMonthlySummaryByDep($monthId, $dep['DEPARTMENT_ID'], $in,$data['salaryTypeId']);
+            $tempVal = $this->getMonthlySummaryByDep($monthId, $dep['DEPARTMENT_ID'], $in, $data['salaryTypeId']);
             if (isset($tempVal['PARENT_DEPARTMENT']) && $departmentId && $counter == 0) {
                 $tempVal['PARENT_DEPARTMENT'] = null;
                 $counter++;
@@ -900,7 +937,8 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return $othersList;
     }
 
-    public function fetchDepartmentList($departmentId = null) {
+    public function fetchDepartmentList($departmentId = null)
+    {
         if ($departmentId != null) {
             $sql = "
                         select $departmentId as DEPARTMENT_ID from dual
@@ -920,16 +958,17 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         //return Helper::extractDbData($result);
     }
 
-    public function getMonthlySummaryByDep($monthId, $departmentId, $inVal,$salaryTypeId) {
+    public function getMonthlySummaryByDep($monthId, $departmentId, $inVal, $salaryTypeId)
+    {
         $boundedParameter = [];
-        $boundedParameter['monthId']=$monthId;
-        $boundedParameter['departmentId']=$departmentId;
-        $strSalaryType=" ";
-        if($salaryTypeId!=null && $salaryTypeId!=-1){
-        $strSalaryType=" AND SS.SALARY_TYPE_ID=:salaryTypeId";
-        $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        $boundedParameter['monthId'] = $monthId;
+        $boundedParameter['departmentId'] = $departmentId;
+        $strSalaryType = " ";
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " AND SS.SALARY_TYPE_ID=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
         }
-        
+
         $sql = "select D.Department_Name,D.Parent_Department,p.* from (SELECT 
             Department_Id
             ,PAY_ID
@@ -957,11 +996,12 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
             MAX(total) FOR PAY_ID IN ({$inVal})
             ) P 
             LEFT JOIN Hris_Departments D ON (D.Department_Id=P.Department_Id)";
-        $result = EntityHelper::rawQueryResult($this->adapter, $sql,$boundedParameter);
+        $result = EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
         return $result->current();
     }
 
-    public function getMonthList() {
+    public function getMonthList()
+    {
         $sql = "select * from Hris_Month_Code where 
                 Fiscal_Year_Id=(select max(Fiscal_Year_Id) 
                 from Hris_Fiscal_Years) order by Fiscal_Year_Month_No";
@@ -969,14 +1009,15 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         return Helper::extractDbData($data);
     }
 
-    public function getJvReport($data){
-        $salaryType = ($data['salaryTypeId']!=null && $data['salaryTypeId']!=-1)? $data['salaryTypeId'] : '' ;
+    public function getJvReport($data)
+    {
+        $salaryType = ($data['salaryTypeId'] != null && $data['salaryTypeId'] != -1) ? $data['salaryTypeId'] : '';
         $monthId = $data['monthId'];
-        $deptId = $data['departmentId']!=-1 ? $data['departmentId'] : '' ;
+        $deptId = $data['departmentId'] != -1 ? $data['departmentId'] : '';
         $reportTypeId = $data['reportTypeId'];
         $sql = '';
 
-        if($reportTypeId == 2){
+        if ($reportTypeId == 2) {
             $sql .= "SELECT jv_name,
             listagg(department_name,',') within group( order by department_name) DEPARTMENT_NAME, 
             SUM(jv_value) JV_VALUE, PAY_TYPE_FLAG FROM( ";
@@ -995,12 +1036,12 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         JOIN Hris_Payroll_Jv PJV ON (PJV.STATUS='E' AND PJV.FLAG='Y' AND PJV.DEPARTMENT_ID=SED.DEPARTMENT_ID AND SSD.PAY_ID=PJV.PAY_ID)
         WHERE SS.MONTH_ID=$monthId ";
 
-        $sql.= $deptId!='' ? " AND Sed.Department_Id = $deptId " : '' ;
-        $sql.= $salaryType!='' ? " AND SS.SALARY_TYPE_ID = $salaryType " : '' ;
-        $sql.=" GROUP BY Pjv.Jv_Name,Sed.Department_Id,SED.DEPARTMENT_NAME,PJV.Pay_Id,PAY_TYPE_FLAG
+        $sql .= $deptId != '' ? " AND Sed.Department_Id = $deptId " : '';
+        $sql .= $salaryType != '' ? " AND SS.SALARY_TYPE_ID = $salaryType " : '';
+        $sql .= " GROUP BY Pjv.Jv_Name,Sed.Department_Id,SED.DEPARTMENT_NAME,PJV.Pay_Id,PAY_TYPE_FLAG
         ORDER BY Sed.Department_Id";
 
-        if($reportTypeId == 2){
+        if ($reportTypeId == 2) {
             $sql .= ")
             GROUP BY jv_name,
             pay_id,
@@ -1011,8 +1052,9 @@ and Show_Default='Y'  AND VARIABLE_TYPE='O'";
         $data = EntityHelper::rawQueryResult($this->adapter, $sql);
         return Helper::extractDbData($data);
     }
-    
-    public function gettaxYearlyByHeads($heads,$type='arr') {
+
+    public function gettaxYearlyByHeads($heads, $type = 'arr')
+    {
         $sql = "select 
  Variance_Id,variance_name, 'V'||Variance_Id as template_name             
 from hris_variance 
@@ -1023,14 +1065,15 @@ from hris_variance
         $boundedParameter = [];
         $boundedParameter['heads'] = $heads;
         $result = $this->rawQuery($sql, $boundedParameter);
-        if($type=='sin'){
-        return $result != null ? $result[0] : ''; 
-        }else{
-        return Helper::extractDbData($result);
+        if ($type == 'sin') {
+            return $result != null ? $result[0] : '';
+        } else {
+            return Helper::extractDbData($result);
         }
     }
-    
-    private function fetchSalaryTaxYearlyVariable() {
+
+    private function fetchSalaryTaxYearlyVariable()
+    {
         $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE='Y'");
         $dbArray = "";
         foreach ($rawList as $key => $row) {
@@ -1042,11 +1085,12 @@ from hris_variance
         }
         return $dbArray;
     }
-    
-    
-    public function getTaxYearly($data) {
-         $variable = $this->fetchSalaryTaxYearlyVariable();
-         
+
+
+    public function getTaxYearly($data)
+    {
+        $variable = $this->fetchSalaryTaxYearlyVariable();
+
 
         $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
         $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
@@ -1061,17 +1105,17 @@ from hris_variance
         $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
         $monthId = $data['monthId'];
         $salaryTypeId = $data['salaryTypeId'];
-//        $fiscalId = $data['fiscalId'];
-        
+        //        $fiscalId = $data['fiscalId'];
+
         $boundedParameter = [];
         $boundedParameter['monthId'] = $monthId;
-        $strSalaryType=" ";
-        if($salaryTypeId!=null && $salaryTypeId!=-1){
-        $strSalaryType=" WHERE SALARY_TYPE_ID=:salaryTypeId";
-        $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        $strSalaryType = " ";
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " WHERE SALARY_TYPE_ID=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
         }
         $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
-        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
 
         $sql = "SELECT 
             E.FULL_NAME,
@@ -1081,6 +1125,10 @@ from hris_variance
             ,BR.BRANCH_NAME
             ,E.BIRTH_DATE
             ,E.JOIN_DATE
+			,CASE E.MARITAL_STATUS
+            WHEN  'M' THEN 'Married'
+            WHEN  'M' THEN 'Unmarried'
+            END AS MARITAL_STATUS
             ,D.DEPARTMENT_NAME
             ,SSED.FUNCTIONAL_TYPE_EDESC
             ,GB.*
@@ -1088,7 +1136,10 @@ from hris_variance
             ,SSED.DESIGNATION_TITlE
             ,SSED.POSITION_NAME
             ,SSED.ACCOUNT_NO
-            ,SSED.MARITAL_STATUS_DESC
+            ,CASE SSED.MARITAL_STATUS_DESC
+            WHEN 'MARRIED' THEN 'Couple'
+            WHEN 'UNMARRIED' THEN 'Single' 
+            END AS ASSESSMENT_CHOICE
             ,C.COMPANY_NAME
             ,MCD.YEAR||'-'||MCD.MONTH_EDESC AS YEAR_MONTH_NAME
             FROM
@@ -1121,7 +1172,235 @@ from hris_variance
                 WHERE 1=1 
              {$searchCondition['sql']}
              ";
-
+        // echo $sql ; die;
         return $this->rawQuery($sql, $boundedParameter);
+    }
+
+    private function fetchSalaryGroupVariableSelector($variableType, $prefix)
+    {
+        $boundedParameter = [];
+        $boundedParameter['variableType'] = $variableType;
+        $rawList = EntityHelper::rawQueryResult($this->adapter, "select  * from Hris_Variance where   STATUS='E' AND VARIABLE_TYPE=:variableType order by order_no", $boundedParameter);
+        $dbArray = "";
+        foreach ($rawList as $key => $row) {
+            $tempPrefix = $prefix . ".V" . $row['VARIANCE_ID'];
+            if ($key == sizeof($rawList)) {
+                $dbArray .= "NVL({$tempPrefix},0) AS V{$row['VARIANCE_ID']}";
+            } else {
+                $dbArray .= "NVL({$tempPrefix},0) AS V{$row['VARIANCE_ID']},";
+            }
+        }
+        return $dbArray;
+    }
+
+    public function getTaxYearlyNew($data)
+    {
+        $variable = $this->fetchSalaryTaxYearlyVariable();
+
+
+        $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
+        $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
+        $departmentId = isset($data['departmentId']) ? $data['departmentId'] : -1;
+        $designationId = isset($data['designationId']) ? $data['designationId'] : -1;
+        $positionId = isset($data['positionId']) ? $data['positionId'] : -1;
+        $serviceTypeId = isset($data['serviceTypeId']) ? $data['serviceTypeId'] : -1;
+        $serviceEventTypeId = isset($data['serviceEventTypeId']) ? $data['serviceEventTypeId'] : -1;
+        $employeeTypeId = isset($data['employeeTypeId']) ? $data['employeeTypeId'] : -1;
+        $genderId = isset($data['genderId']) ? $data['genderId'] : -1;
+        $functionalTypeId = isset($data['functionalTypeId']) ? $data['functionalTypeId'] : -1;
+        $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
+        $monthId = $data['monthId'];
+        $salaryTypeId = $data['salaryTypeId'];
+        //        $fiscalId = $data['fiscalId'];
+
+        $boundedParameter = [];
+        $boundedParameter['monthId'] = $monthId;
+        $strSalaryType = " ";
+
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " WHERE SALARY_TYPE_ID=:salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        }
+
+        $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
+
+        $sql = "SELECT 
+            E.FULL_NAME,
+            E.EMPLOYEE_CODE
+            ,E.ID_PAN_NO
+            ,E.ID_ACCOUNT_NO
+            ,BR.BRANCH_NAME
+            ,E.BIRTH_DATE
+            ,E.JOIN_DATE
+            ,CASE E.MARITAL_STATUS
+            WHEN  'M' THEN 'Married'
+            WHEN  'M' THEN 'Unmarried'
+            END AS MARITAL_STATUS
+            ,D.DEPARTMENT_NAME
+            ,SSED.FUNCTIONAL_TYPE_EDESC
+            ,GB.*
+            ,SSED.SERVICE_TYPE_NAME
+            ,SSED.DESIGNATION_TITlE
+            ,SSED.POSITION_NAME
+            ,SSED.ACCOUNT_NO
+            ,CASE SSED.MARITAL_STATUS_DESC
+            WHEN 'MARRIED' THEN 'Couple'
+            WHEN 'UNMARRIED' THEN 'Single' 
+            END AS ASSESSMENT_CHOICE
+            ,C.COMPANY_NAME,
+            hssg.group_name
+            ,MCD.YEAR||'-'||MCD.MONTH_EDESC AS YEAR_MONTH_NAME
+            FROM
+            (
+            SELECT * FROM (select employee_id, variance_id, month_id, group_id, max(sheet_no) as sheet_no,max(total) as total from (
+                SELECT
+                    sd.employee_id,
+                    vp.variance_id,
+                    ss.month_id,
+                    ss.group_id,
+                    ss.sheet_no,
+                    sum(val) AS total
+                FROM
+                    hris_variance                    v
+                    LEFT JOIN hris_variance_payhead            vp ON ( v.variance_id = vp.variance_id )
+                    LEFT JOIN (
+                        SELECT
+                            *
+                        FROM
+                            hris_salary_sheet
+                    ) ss ON ( 1 = 1 )
+                    LEFT JOIN hris_salary_sheet_detail         sd ON ( ss.sheet_no = sd.sheet_no
+                                                               AND sd.pay_id = vp.pay_id )
+                WHERE
+                    v.status = 'E'
+                    AND v.variable_type = 'Y'
+                    AND ss.month_id = :monthid
+                GROUP BY
+                    sd.employee_id,
+                    v.variance_name,
+                    vp.variance_id,
+                    ss.month_id,
+                    ss.sheet_no,
+                    ss.group_id
+              ) group by
+              employee_id, variance_id, month_id, group_id)
+            PIVOT ( MAX( TOTAL )
+                FOR Variance_Id 
+                IN ($variable)
+                ))GB
+                LEFT JOIN HRIS_EMPLOYEES E ON (E.EMPLOYEE_ID=GB.EMPLOYEE_ID)
+                LEFT JOIN Hris_Salary_Sheet_Emp_Detail SSED ON 
+    (SSED.SHEET_NO=GB.SHEET_NO AND SSED.EMPLOYEE_ID=GB.EMPLOYEE_ID AND SSED.MONTH_ID=GB.MONTH_ID)
+                LEFT JOIN HRIS_DEPARTMENTS D  ON (D.DEPARTMENT_ID=SSED.DEPARTMENT_ID)
+                LEFT JOIN HRIS_FUNCTIONAL_TYPES FUNT ON (SSED.FUNCTIONAL_TYPE_ID=FUNT.FUNCTIONAL_TYPE_ID)
+                LEFT JOIN HRIS_BRANCHES BR ON (SSED.BRANCH_ID=BR.BRANCH_ID)
+                LEFT JOIN HRIS_COMPANY C ON (SSED.COMPANY_ID=C.COMPANY_ID)
+                LEFT JOIN HRIS_MONTH_CODE MCD ON (MCD.MONTH_ID=:monthId)
+                LEFT JOIN hris_salary_sheet_group hssg on (hssg.group_id = GB.group_id)
+                WHERE 1=1 
+             {$searchCondition['sql']}
+             ";
+        //  print_r($boundedParameter);die;
+        return $this->rawQuery($sql, $boundedParameter);
+    }
+
+    public function getDefaultColumnsForTaxSheet()
+    {
+        $sql = "select 'V'||Variance_Id  as VARIANCE,VARIANCE_NAME from Hris_Variance where status='E'
+        AND VARIABLE_TYPE='Y'
+        order by v_heads, order_no";
+        $data = EntityHelper::rawQueryResult($this->adapter, $sql);
+        return Helper::extractDbData($data);
+    }
+
+    public function getBankType()
+    {
+        $sql = "select * from hris_banks where status='E'";
+        $data = EntityHelper::rawQueryResult($this->adapter, $sql);
+        return Helper::extractDbData($data);
+    }
+
+    public function getBankWiseEmployeeNet($data)
+    {
+        $variable = $this->fetchSalaryTaxYearlyVariable();
+        $companyId = -1;
+        $companyIdNew = isset($data['companyId']) ? $data['companyId'] : -1;
+
+        if ($companyIdNew <> -1) {
+            $companyConditionNew = " AND SSED.company_id = $companyIdNew";
+        } else {
+            $companyConditionNew = "";
+        }
+
+        // $companyId = isset($data['companyId']) ? $data['companyId'] : -1;
+        $branchId = isset($data['branchId']) ? $data['branchId'] : -1;
+        $departmentId = isset($data['departmentId']) ? $data['departmentId'] : -1;
+        $designationId = isset($data['designationId']) ? $data['designationId'] : -1;
+        $positionId = isset($data['positionId']) ? $data['positionId'] : -1;
+        $serviceTypeId = isset($data['serviceTypeId']) ? $data['serviceTypeId'] : -1;
+        $serviceEventTypeId = isset($data['serviceEventTypeId']) ? $data['serviceEventTypeId'] : -1;
+        $employeeTypeId = isset($data['employeeTypeId']) ? $data['employeeTypeId'] : -1;
+        $genderId = isset($data['genderId']) ? $data['genderId'] : -1;
+        $functionalTypeId = isset($data['functionalTypeId']) ? $data['functionalTypeId'] : -1;
+        $employeeId = isset($data['employeeId']) ? $data['employeeId'] : -1;
+        $monthId = $data['monthId'];
+        $salaryTypeId = $data['salaryTypeId'];
+        $bankTypeId = $data['bankTypeId'];
+        //        $fiscalId = $data['fiscalId'];
+        $boundedParameter = [];
+        $boundedParameter['monthId'] = $monthId;
+        $strSalaryType = " ";
+
+        if ($salaryTypeId != null && $salaryTypeId != -1) {
+            $strSalaryType = " and hss.SALARY_TYPE_ID=$salaryTypeId";
+            $boundedParameter['salaryTypeId'] = $salaryTypeId;
+        }
+
+        $searchCondition = $this->getSearchConditonBoundedPayroll($companyId, $branchId, $departmentId, $positionId, $designationId, $serviceTypeId, $serviceEventTypeId, $employeeTypeId, $employeeId, $genderId, null, $functionalTypeId);
+        $boundedParameter = array_merge($boundedParameter, $searchCondition['parameter']);
+
+        if ($companyIdNew > 0) {
+            $sql = "select distinct he.full_name,he.employee_code, 
+            CASE
+                WHEN hssd.val = 0 THEN '0.00'
+                ELSE to_char(hssd.val, '99,99,999.99')
+                END AS val,
+         he.id_account_no, hb.bank_name, hfy.fiscal_year_name, 
+        trunc(sysdate) as today_date, hmc.month_edesc from hris_salary_sheet_detail hssd
+        left join hris_employees he on (he.employee_id = hssd.employee_id)
+        left join hris_banks hb on (hb.bank_id = he.bank_id)
+        left join hris_salary_sheet hss on (hss.sheet_no = hssd.sheet_no)
+        left join hris_month_code hmc on (hmc.month_id = hss.month_id)
+        left join hris_fiscal_years hfy on (hfy.fiscal_year_id = hmc.fiscal_year_id)
+        left join Hris_Salary_Sheet_Emp_Detail SSED on (SSED.company_id=hss.company_id and SSED.sheet_no=hss.sheet_no and SSED.month_id=hss.month_id)
+        where  hss.month_id = {$data['monthId']}
+        and he.bank_id = {$data['bankTypeId']}
+        and hssd.pay_id = 139
+        {$strSalaryType} {$companyConditionNew}
+		 order by he.full_name
+             ";
+        } else {
+            $sql = "select he.full_name,he.employee_code, 
+            CASE
+                WHEN hssd.val = 0 THEN '0.00'
+                ELSE to_char(hssd.val, '99,99,999.99')
+                END AS val,he.id_account_no, hb.bank_name, hfy.fiscal_year_name, 
+        trunc(sysdate) as today_date, hmc.month_edesc from hris_salary_sheet_detail hssd
+        left join hris_employees he on (he.employee_id = hssd.employee_id)
+        left join hris_banks hb on (hb.bank_id = he.bank_id)
+        left join hris_salary_sheet hss on (hss.sheet_no = hssd.sheet_no)
+        left join hris_month_code hmc on (hmc.month_id = hss.month_id)
+        left join hris_fiscal_years hfy on (hfy.fiscal_year_id = hmc.fiscal_year_id)
+        where  hss.month_id = {$data['monthId']}
+        and he.bank_id = {$data['bankTypeId']}
+        and hssd.pay_id = 139
+        {$strSalaryType}
+		 order by he.full_name
+             ";
+        }
+        // echo '<pre>';print_r($sql);die;
+
+        return $this->rawQuery($sql);
     }
 }

@@ -209,6 +209,20 @@ class VariableProcessor {
             case PayrollGenerator::VARIABLES[29]:
                 $processedValue = $this->payrollRepo->getRemoteBranch($this->employeeId);
                 break;
+				
+			            /*
+             * OPENING_GRADE_QTY
+             */
+            case PayrollGenerator::VARIABLES[30]:
+                $processedValue = $this->payrollRepo->getOpeningGradeQty($this->employeeId);
+                break;
+
+                 /*
+             * DEARNESS
+             */
+            case PayrollGenerator::VARIABLES[31]:
+                $processedValue = $this->payrollRepo->fetchDearnessSalary($this->employeeId, $this->sheetNo);
+                break;
             
             
             default:

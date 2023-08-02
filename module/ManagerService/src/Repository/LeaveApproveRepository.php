@@ -293,6 +293,7 @@ class LeaveApproveRepository implements RepositoryInterface {
                   END
                 OR ELA.FISCAL_YEAR_MONTH_NO IS NULL)";
 
+			//print_r($sql);die;
         $statement = $this->adapter->query($sql);
         $result = $statement->execute($boundedParameter);
         return $result->current();
@@ -549,6 +550,7 @@ INITCAP(L.LEAVE_ENAME)||'('||SLR.SUB_NAME||')' END AS LEAVE_ENAME
                     ) BETWEEN FROM_DATE AND TO_DATE)
                   END
                 OR ELA.FISCAL_YEAR_MONTH_NO IS NULL)";
+				
         $statement = $this->adapter->query($sql);
         $result = $statement->execute($boundedParameter);
         return $result->current();

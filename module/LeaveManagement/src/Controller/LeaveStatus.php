@@ -61,7 +61,7 @@ class LeaveStatus extends HrisController {
 
 
         $detail = $leaveApproveRepository->fetchById($id);
-        
+        //print_r($id); die;
         if($this->preference['displayHrApproved'] == 'Y' && $detail['HR_APPROVED'] == 'Y'){
             $detail['APPROVER_ID'] = '-1';
             $detail['APPROVER_NAME'] = 'HR';
@@ -144,6 +144,7 @@ class LeaveStatus extends HrisController {
 
             return $this->redirect()->toRoute("leavestatus");
         }
+		//print_r($detail);die;
         $leaveApply->exchangeArrayFromDB($detail);
         $this->form->bind($leaveApply);
         return Helper::addFlashMessagesToArray($this, [

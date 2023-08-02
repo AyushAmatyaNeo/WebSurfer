@@ -29,7 +29,9 @@
                         app.datePickerWithNepali('permanentDate', 'permanentDateNepali');
                         app.datePickerWithNepali('gratuityDate', 'nepaligratuityDate');
                         break;
-                    case 7:
+                    case 8:
+                        break;
+                    case 5:
                         break;
                 }
 
@@ -54,9 +56,15 @@
 
             }, onNext: function (tab, navigation, index) {
                 if (typeof document.currentTab !== 'undefined') {
-                    if (index <= 4 || index == 7 || index == 8|| index == 9) {
-                        $('#btnform' + index).click();
-                    } else if (index == 5) {
+                    if (index <= 4 || index == 5 || index == 8 || index == 9|| index == 10) {
+                        if(index>5){
+                            $('#btnform' + (index - 1)).click();
+                        }else if(index==5){
+                            $('#btnform' + 12).click();
+                        }else{
+                            $('#btnform' + index).click();
+                        }
+                    } else if (index == 6) {
                         angular.element('#quaConId').scope().addQualification();
                         return true;
                     } else {

@@ -549,7 +549,8 @@ $pendingleaveUrl = $this->url('managerReport', ['action' => 'index', 'id' => 1])
                                                             <img height="80" width="80" src="<?php print $emp['FILE_PATH'] ? $this->basePath('uploads/' . $emp['FILE_PATH']) : $this->basePath('img/nobody_m.original.jpg'); ?>"> </div>
                                                         <div class="mt-body">
                                                             <h3 class="mt-username"><?php print $emp['FULL_NAME']; ?></h3>
-                                                            <p class="mt-user-title"><?php print $emp['DESIGNATION_TITLE']; ?> </p>
+															 <p class="mt-user-title" style="color:red;"><?php print $emp['DEPARTMENT_NAME']; ?> </p>
+                                                            <p class="mt-user-title" ><?php print $emp['DESIGNATION_TITLE']; ?> </p>
                                                             <div class="mt-stats">
                                                                 <div class="btn-group btn-group btn-group-justified">
                                                                     <a href="javascript:;" class="btn font-green">
@@ -580,7 +581,9 @@ $pendingleaveUrl = $this->url('managerReport', ['action' => 'index', 'id' => 1])
                                                             <img height="80" width="80" src="<?php print $emp['FILE_PATH'] ? $this->basePath('uploads/' . $emp['FILE_PATH']) : $this->basePath('img/nobody_m.original.jpg'); ?>"> </div>
                                                         <div class="mt-body">
                                                             <h3 class="mt-username"><?php print $emp['FULL_NAME']; ?></h3>
-                                                            <p class="mt-user-title"><?php print $emp['DESIGNATION_TITLE']; ?> </p>
+															 <p class="mt-user-title" style="color:red;"><?php print $emp['DEPARTMENT_NAME']; ?> </p>
+															 <p class="mt-user-title"><?php print $emp['DESIGNATION_TITLE']; ?> </p>
+                                                           
                                                             <div class="mt-stats">
                                                                 <div class="btn-group btn-group btn-group-justified">
                                                                     <!--                                                                    <a href="javascript:;" class="btn font-green">

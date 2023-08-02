@@ -130,16 +130,20 @@
                         <td><b>{{EMPLOYEE_CODE}}</b></td>
                         <td></td>
                         <td></td>
-                        <td><b>Assessment Choice</b></td>
-                        <td><b>{{MARITAL_STATUS_DESC}}</b></td>
+                        <td><b>Maritual Status</b></td>
+                        <td><b>{{MARITAL_STATUS}}</b></td>
+                        
                     </tr>
                     <tr>
                         <td><b>PAN No</b></td>
                         <td><b>{{ID_PAN_NO}}</b></td>
                         <td></td>
                         <td></td>
-                        <td></td>
-                        <td></td>
+                        <td><b>Assessment Choice</b></td>
+                        <td><b>{{ASSESSMENT_CHOICE}}</b></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">&nbsp;</td>
                     </tr>
                     <tr>
                         <td colspan="2"><b>Incomes</b></td>
@@ -185,7 +189,7 @@
 
                         });
 
-                        response.data.employees[index]['TOTAL_INCOME_VAL'] = tempTotal;
+                        response.data.employees[index]['TOTAL_INCOME_VAL'] = tempTotal.toFixed(2);
 
                     });
 //                    
@@ -203,9 +207,12 @@
         
         
         $('#excelExport').on('click', function () {
-            
-            
-        });
+            $(document).ready(function () {
+				$("#table").table2excel({
+					filename: "Tax Yearly.xls"
+				});
+			 });
+                    });
         
         $('#pdfExport').on('click', function () {
             kendo.drawing.drawDOM($("#table")).then(function (group) {

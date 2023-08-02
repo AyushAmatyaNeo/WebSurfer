@@ -80,6 +80,7 @@ class LeaveStatusRepository extends HrisRepository {
         ]);
 
         $statement = $sql->prepareStatementForSqlObject($select);
+		
         $result = $statement->execute();
         return $result->current();
     }
@@ -120,12 +121,12 @@ class LeaveStatusRepository extends HrisRepository {
 
         if ($fromDate != null) {
             $fromDateCondition = " AND LA.START_DATE>=TO_DATE(:fromDate,'DD-MM-YYYY')";
-            $boundedParameter['leaveId'] = $fromDate;
+            $boundedParameter['fromDate'] = $fromDate;
         }
 
         if ($toDate != null) {
             $toDateCondition = "AND LA.END_DATE<=TO_DATE(:toDate,'DD-MM-YYYY')";
-            $boundedParameter['leaveId'] = $toDate;
+            $boundedParameter['toDate'] = $toDate;
         }
 
         $sql = "SELECT INITCAP(L.LEAVE_ENAME) AS LEAVE_ENAME,
@@ -316,6 +317,7 @@ AS LEAVE_ENAME,
                   INITCAP(TO_CHAR(LA.APPROVED_DT, 'DD-MON-YYYY'))    AS APPROVED_DT,
                   E.EMPLOYEE_CODE                                    AS EMPLOYEE_CODE,                  
                   INITCAP(E.FULL_NAME)                               AS FULL_NAME,
+				  INITCAP(P.POSITION_NAME)                           AS POSITION_NAME,
                   INITCAP(E1.FULL_NAME)                              AS RECOMMENDED_BY_NAME,
                   INITCAP(E2.FULL_NAME)                              AS APPROVED_BY_NAME,
                   RA.RECOMMEND_BY                                    AS RECOMMENDER_ID,
@@ -329,7 +331,8 @@ AS LEAVE_ENAME,
                   LA.HARDCOPY_SIGNED_FLAG                            AS HARDCOPY_SIGNED_FLAG,
                   LS.APPROVED_FLAG                                   AS SUB_APPROVED_FLAG,
                   INITCAP(TO_CHAR(LS.APPROVED_DATE, 'DD-MON-YYYY'))  AS SUB_APPROVED_DATE,
-                  LS.EMPLOYEE_ID                                     AS SUB_EMPLOYEE_ID
+                  LS.EMPLOYEE_ID                                     AS SUB_EMPLOYEE_ID,
+				  E3.FULL_NAME                                       AS SUB_EMPLOYEE_NAME
                 FROM HRIS_EMPLOYEE_LEAVE_REQUEST LA
                 LEFT OUTER JOIN HRIS_LEAVE_MASTER_SETUP L
                 ON L.LEAVE_ID=LA.LEAVE_ID
@@ -347,6 +350,10 @@ AS LEAVE_ENAME,
                 ON APRV.EMPLOYEE_ID = RA.APPROVED_BY
                 LEFT OUTER JOIN HRIS_LEAVE_SUBSTITUTE LS
                 ON LA.ID       = LS.LEAVE_REQUEST_ID
+				LEFT OUTER JOIN HRIS_EMPLOYEES E3 
+                ON LS.EMPLOYEE_ID = E3.EMPLOYEE_ID
+                LEFT OUTER JOIN HRIS_POSITIONS P
+                ON P.POSITION_ID = E.POSITION_ID    
                 LEFT JOIN 
                 (SELECT 
 WOD_ID AS ID

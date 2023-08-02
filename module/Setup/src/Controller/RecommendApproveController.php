@@ -94,7 +94,7 @@ class RecommendApproveController extends HrisController {
         return Helper::addFlashMessagesToArray($this, [
                     'form' => $this->form,
                     'id' => $id,
-                    'employeeList' => EntityHelper::getTableKVList($this->adapter, "HRIS_EMPLOYEES", "EMPLOYEE_ID", ["EMPLOYEE_CODE","FULL_NAME"], ["STATUS" => "E"]," - "),
+                    'employeeList' => EntityHelper::getTableKVList($this->adapter, "HRIS_EMPLOYEES", "EMPLOYEE_ID", ["EMPLOYEE_CODE","FULL_NAME"], ["STATUS" => "E"]," - ", true),
                     'employees' => $this->repository->getEmployees($id),
                     'alternateRecommendor' => $this->repository->getAlternateRecmApprover($id,'R'),
                     'alternateApprover' => $this->repository->getAlternateRecmApprover($id,'A')

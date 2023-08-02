@@ -69,7 +69,10 @@ class HolidaySetup extends HrisController {
                 'form' => $this->form,
                 'customRenderer' => Helper::renderCustomView(),
                 'searchValues' => EntityHelper::getSearchData($this->adapter),
-                'fiscalYearKV' => $fiscalYearKV
+                'fiscalYearKV' => $fiscalYearKV,
+				'preference' => $this->preference,
+                'provinces' => EntityHelper::getProvinceList($this->adapter),
+                'braProv' => EntityHelper::getBranchFromProvince($this->adapter),
         ]);
     }
 
@@ -147,7 +150,10 @@ class HolidaySetup extends HrisController {
                 'customRenderer' => Helper::renderCustomView(),
                 'searchValues' => EntityHelper::getSearchData($this->adapter),
                 'searchSelectedValues' => $searchSelectedValues,
-                'fiscalYearKV' => $fiscalYearKV
+                'fiscalYearKV' => $fiscalYearKV,
+				'preference' => $this->preference,
+                'provinces' => EntityHelper::getProvinceList($this->adapter),
+                'braProv' => EntityHelper::getBranchFromProvince($this->adapter),
         ]);
     }
 

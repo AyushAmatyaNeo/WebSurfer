@@ -758,10 +758,20 @@ class AllReportController extends HrisController {
     
     
     public function calendarReportAction(){
-        $empRawList= EntityHelper::rawQueryResult($this->adapter, "select 
-employee_id,employee_code||'-'||full_name as full_name
-from hris_employees where status='E'
-and Retired_Flag!='Y' and Resigned_Flag!='Y'");
+        if ($this->acl['ROLE_ID'] == 1) {
+            $empRawList = EntityHelper::rawQueryResult($this->adapter, "select
+                        employee_id,employee_code||'-'||full_name as full_name
+                        from hris_employees where status='E'
+                        and Retired_Flag!='Y' and Resigned_Flag!='Y'");
+        } else {
+            $selfBranch = "branch_id=(select branch_id from hris_employees where employee_id=" . $this->employeeId . ")";
+            $selfDepartment = "department_id=(select department_id from hris_employees where employee_id=" . $this->employeeId . ")";
+
+            $empRawList = EntityHelper::rawQueryResult($this->adapter, "select
+                        employee_id,employee_code||'-'||full_name as full_name
+                        from hris_employees where status='E'
+                        and Retired_Flag!='Y' and Resigned_Flag!='Y' and {$selfBranch} and $selfDepartment");
+        }
         $empList=Helper::extractDbData($empRawList);
         
         $empRawProfileList= EntityHelper::rawQueryResult($this->adapter, "select 

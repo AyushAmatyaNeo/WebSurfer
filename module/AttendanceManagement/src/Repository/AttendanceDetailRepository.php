@@ -217,9 +217,10 @@ class AttendanceDetailRepository implements RepositoryInterface {
                       ||T.TRAINING_NAME
                       ||')'
                       ||LATE_STATUS_DESC(A.LATE_STATUS)
-                    WHEN A.OVERALL_STATUS ='PR'
-                    THEN 'Present '
-                      ||LATE_STATUS_DESC(A.LATE_STATUS)
+                    WHEN A.OVERALL_STATUS ='PR' THEN
+                    (CASE WHEN SP_ID IS NOT NULL THEN 
+                    (SELECT SP_EDESC FROM HRIS_SPECIAL_ATTENDANCE_SETUP WHERE ID = A.SP_ID) || ''
+                    ELSE 'Present ' ||LATE_STATUS_DESC(A.LATE_STATUS) END)
                     WHEN A.OVERALL_STATUS ='AB'
                     THEN 'Absent'
                     WHEN A.OVERALL_STATUS ='BA'
@@ -229,7 +230,9 @@ class AttendanceDetailRepository implements RepositoryInterface {
                   END) AS STATUS,
                    S.SHIFT_ENAME,
                   TO_CHAR(S.START_TIME,'HH:MI AM') AS START_TIME,
-                  TO_CHAR(S.END_TIME,'HH:MI AM')   AS END_TIME,
+                  CASE WHEN A.HALFDAY_FLAG = 'Y' then TO_CHAR(S.HALF_DAY_OUT_TIME,'HH:MI AM') 
+                  else TO_CHAR(S.END_TIME,'HH:MI AM')
+                  END   AS END_TIME,
                    CASE WHEN A.OT_MINUTES>0
                    THEN 
                    MIN_TO_HOUR(A.OT_MINUTES)
@@ -282,7 +285,7 @@ class AttendanceDetailRepository implements RepositoryInterface {
                 ) Q
                 {$rowNums}
                 ";
-
+		
         $statement = $this->adapter->query($sql);
         $result = $statement->execute($boundedParams);
         return Helper::extractDbData($result);
@@ -703,7 +706,7 @@ class AttendanceDetailRepository implements RepositoryInterface {
         $sql = "SELECT INITCAP(TO_CHAR(SYSDATE, 'HH:MI AM')) AS CURRENT_TIME,
             INITCAP(TO_CHAR(S.START_TIME+((S.LATE_IN*60)/86400), 'HH:MI AM')) AS CHECKIN_TIME, 
             INITCAP(TO_CHAR(S.END_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS CHECKOUT_TIME,
-            INITCAP(TO_CHAR(S.HALF_DAY_END_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS HALF_DAY_CHECKOUT_TIME,
+            INITCAP(TO_CHAR(S.HALF_DAY_OUT_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS HALF_DAY_CHECKOUT_TIME,
             ESA.*,S.* FROM HRIS_EMPLOYEES E
                 join HRIS_EMPLOYEE_SHIFT_ASSIGN ESA on (ESA.EMPLOYEE_ID=E.EMPLOYEE_ID)
                 JOIN HRIS_SHIFTS S ON (S.SHIFT_ID=ESA.SHIFT_ID)
@@ -719,7 +722,7 @@ class AttendanceDetailRepository implements RepositoryInterface {
         $sql = "SELECT INITCAP(TO_CHAR(SYSDATE, 'HH:MI AM')) AS CURRENT_TIME,
       INITCAP(TO_CHAR(S.START_TIME+((S.LATE_IN*60)/86400), 'HH:MI AM'))   AS CHECKIN_TIME,
       INITCAP(TO_CHAR(S.END_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS CHECKOUT_TIME,
-      INITCAP(TO_CHAR(S.HALF_DAY_END_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS HALF_DAY_CHECKOUT_TIME,      
+      INITCAP(TO_CHAR(S.HALF_DAY_OUT_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS HALF_DAY_CHECKOUT_TIME,      
       S.*
             FROM HRIS_SHIFTS S
             WHERE S.DEFAULT_SHIFT='Y'
@@ -1221,4 +1224,22 @@ FROM (SELECT
                 ";
         return EntityHelper::rawQueryResult($this->adapter, $sql);
     }
+	
+	public function fetchEmpShiftDtlByAttendance($employeeId){
+        $sql = "SELECT INITCAP(TO_CHAR(SYSDATE, 'HH:MI AM')) AS CURRENT_TIME,
+            INITCAP(TO_CHAR(S.START_TIME+((S.LATE_IN*60)/86400), 'HH:MI AM')) AS CHECKIN_TIME, 
+            INITCAP(TO_CHAR(S.END_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS CHECKOUT_TIME,
+            INITCAP(TO_CHAR(S.HALF_DAY_OUT_TIME-((S.EARLY_OUT*60)/86400), 'HH:MI AM')) AS HALF_DAY_CHECKOUT_TIME,
+            ESA.*,S.* FROM HRIS_EMPLOYEES E
+                join HRIS_ATTENDANCE_DETAIL ESA on (ESA.EMPLOYEE_ID=E.EMPLOYEE_ID and esa.attendance_dt=trunc(sysdate))
+                JOIN HRIS_SHIFTS S ON (S.SHIFT_ID=ESA.SHIFT_ID)
+                WHERE E.EMPLOYEE_ID={$employeeId}";
+        
+        $statement = $this->adapter->query($sql);
+        $result = $statement->execute();
+        return $result->current();
+        
+    }
 }
+
+

@@ -99,7 +99,8 @@
                 $('.hrm-dashboard-employee-list .fonticon').addClass('active').removeClass('fonticon-disabled');
             }
         });
-
+        
+      
         $('.ln-hrd-emp-lst').on('click', function (e) {
             var $this = $(this);
             var $selectedTr = oTable.find('tbody tr.selected');
@@ -280,7 +281,7 @@
 
     var locationHeadCountData = [];
     for (var x in document.brln) {
-        locationHeadCountData.push([document.brln[x], document.brlnhc[x]]);
+        locationHeadCountData.push([document.brln[x]+' : ' +document.brlnhc[x], document.brlnhc[x]]);
     }
     Highcharts.chart('chart-location-headcount', {
         chart: {
@@ -291,7 +292,7 @@
             }
         },
         title: {
-            text: 'Employees By Branch',
+            text: 'Employees By Employee Type',
             style: {
                 color: '#63AB6A',
                 fontSize: '15px'
@@ -306,6 +307,7 @@
                 cursor: 'pointer',
                 dataLabels: {
                     enabled: false,
+
                 },
                 innerSize: 60,
                 depth: 45,
@@ -319,18 +321,23 @@
             verticalAlign: 'top',
             symbolPadding: 10,
             symbolWidth: 10,
-            y: 20
+            y: 20,
         },
+        
         series: [{
                 name: 'Head Count',
                 data: locationHeadCountData,
-                showInLegend: true
+                showInLegend: true,
+                // enableMouseTracking: false (disable hover effect)
             }]
     });
 
+  
+  
+
     var genderHeadCountData = [];
     for (var x in document.xndr) {
-        genderHeadCountData.push([document.xndr[x], document.xndrhc[x]]);
+        genderHeadCountData.push([document.xndr[x]+':'+document.xndrhc[x], document.xndrhc[x]]);
     }
     Highcharts.chart('chart-gender-headcount', {
         chart: {
@@ -355,16 +362,16 @@
                 allowPointSelect: true,
                 cursor: 'pointer',
                 dataLabels: {
-                    enabled: false,
+                enabled: false,
                 },
-                innerSize: 70,
+                innerSize: 60,
                 depth: 45
             }
         },
         legend: {
-            layout: 'horizontal',
+            layout: 'vertical',
             floating: true,
-            align: 'right',
+            align: 'left',
             verticalAlign: 'top',
             symbolPadding: 10,
             symbolWidth: 10,
@@ -430,30 +437,81 @@
 
     ComponentsPickers.init();
 
+    window.app.pullDataById(document.getEmployessUrl,{
+        action:'getTotalEmployee',
+    }).then(function (success){
+        var totalEmp=success.data;
+        if(totalEmp['TOTAL_EMP']!=null){
+            $('#totLEmployees').text(totalEmp['TOTAL_EMP']);
+        }
+        if(totalEmp['PRESENT_COUNT']!=null){
+            $('#employeePresentDays').text(totalEmp['PRESENT_COUNT']);
+        }
+        if(totalEmp['ABSENT_COUNT']!=null){
+            $('#employeeAbsentDays').text(totalEmp['ABSENT_COUNT']);
+        }
+        if(totalEmp['TRAVEL_COUNT']!=null){
+            $('#employeeTravelDays').text(totalEmp['TRAVEL_COUNT']);
+        }
+        if(totalEmp['TRAINING_COUNT']!=null){
+            $('#employeeTrainingDays').text(totalEmp['TRAINING_COUNT']);
+        }
+     
+    },
+
+    window.app.pullDataById(document.getCurrentDate,{
+        action:'getCurrentDate',
+    }).then(function (success){
+        $('#currentDate').text(success.data['CURRENT_DATE']); 
+    },
+
+    window.app.pullDataById(document.getPendingDashboardUrl, {
+        action: 'getPendingDashboardUrl',
+    }).then(function (success) {
+        var pendingData= success.data['0'];
+        
+        if (pendingData['OVERTIME_COUNT']!= null) {
+        $('#overtimePending').text(pendingData['OVERTIME_COUNT']);  
+        }
+        
+        if (pendingData['LEAVE_COUNT']!= null) {
+        $('#leavePending').text(pendingData['LEAVE_COUNT']);  
+        }
+        
+        if (pendingData['ATTEND_COUNT']!= null) {
+        $('#attendancePending').text(pendingData['ATTEND_COUNT']);  
+        }
+
+        if(pendingData['']!=null){
+            $('employeeWOHDays').text(pendingData['workHoliday_count']);
+        }
+    },
+
     window.app.pullDataById(document.getAdminDashboardUrl, {
         action: 'getAdminDashboardUrl',
     }).then(function (success) {
         var dashboardData = success.data;
         
-        if (dashboardData['PRESENT_DAY']!= null) {
-        $('#employeePresentDays').text(dashboardData['PRESENT_DAY']);  //present 
-        }
+        // if (dashboardData['PRESENT_DAY']!= null) {
+        // $('#employeePresentDays').text(dashboardData['PRESENT_DAY']);  //present 
+        // }
         
-        if (dashboardData['LEAVE']!= null) {
-        $('#employeeLeaveDays').text(dashboardData['LEAVE']);  //on leave
-        }
+        // if (dashboardData['LEAVE']!= null) {
+        // $('#employeeLeaveDays').text(dashboardData['LEAVE']);  //on leave
+        // }
         
-        if (dashboardData['TRAINING']!= null) {
-        $('#employeeTrainingDays').text(dashboardData['TRAINING']);  //on training
-        }
+        // if (dashboardData['TRAINING']!= null) {
+        // $('#employeeTrainingDays').text(dashboardData['TRAINING']);  //on training
+        // }
         
-        if (dashboardData['TOUR']!= null) {
-        $('#employeeTravelDays').text(dashboardData['TOUR']);  // on tour
-        }
+        // if (dashboardData['TOUR']!= null) {
+        // $('#employeeTravelDays').text(dashboardData['TOUR']);  // on tour
+        // }
+
         
-        if (dashboardData['WOH']!= null) {
-        $('#employeeWOHDays').text(dashboardData['WOH']);  // on woh
-        }
+        // if (dashboardData['WOH']!= null) {
+        // $('#employeeWOHDays').text(dashboardData['WOH']);  // on woh
+        // }
         
         if (dashboardData['LATE_IN']!= null) {
         $('#employeeLateInDays').text(dashboardData['LATE_IN']);  //  late in
@@ -517,9 +575,10 @@
         var empServiceDate = "At work for : " + year + month + days;
         $('#employeeServiceDate').text(empServiceDate);  //  service
 
+        
     }, function (failure) {
         console.log(failure);
-    });
+    }))));
 
 
 

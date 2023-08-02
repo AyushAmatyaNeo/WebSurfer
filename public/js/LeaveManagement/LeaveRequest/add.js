@@ -2,6 +2,7 @@
 //    'use strict';
     $(document).ready(function () {
         $('select').select2();
+        app.startEndDatePickerWithNepali('nepaliStartDate', 'startDate', 'nepaliEndDate1', 'endDate')
 
         var subLeaveReference = document.subLeaveReference;
         var subLeaveMaxDays = document.subLeaveMaxDays;
@@ -230,6 +231,8 @@
                 }
 
                 var noOfDays = parseFloat($noOfDays.val());
+               
+
 
                 if ((availableDays != "" && noOfDays != "") && noOfDays > availableDays) {
                     $("#errorMsg").html("* Applied days can't be more than available days");
@@ -388,21 +391,53 @@
             
         }
 
+        // $subRefId.on('change', function () {
+        //     if (subLeaveReference == 'Y') {
+                
+        //         calculateAvailableDays($startDate.val(), $endDate.val(), $halfDay.val(), $employee.val(), $leave.val());
+
+        //         var selectedSubRefId = $(this).val();
+        //         if (selectedSubRefId !== ' ') {
+        //             $('#request').attr("disabled", false);
+        //         } else {
+        //             $('#request').attr("disabled", true);
+        //         }
+
+        //         $.each(substituteDetails, function (index, value) {
+        //             if (selectedSubRefId == value.ID) {
+        //                 $availableDays.val(value.AVAILABLE_DAYS);
+        //             }
+        //         });
+        //     }
+        // });
+
         $subRefId.on('change', function () {
             if (subLeaveReference == 'Y') {
                 
                 calculateAvailableDays($startDate.val(), $endDate.val(), $halfDay.val(), $employee.val(), $leave.val());
-
+                var selectedSubNameId = $(this).select2('data')[0].text;;
                 var selectedSubRefId = $(this).val();
                 if (selectedSubRefId !== ' ') {
                     $('#request').attr("disabled", false);
                 } else {
                     $('#request').attr("disabled", true);
                 }
-
+                
                 $.each(substituteDetails, function (index, value) {
-                    if (selectedSubRefId == value.ID) {
-                        $availableDays.val(value.AVAILABLE_DAYS);
+                    var found_names = substituteDetails.filter(v => v.ID === value.ID);
+                    if(found_names.length<=1)
+                    {
+                        if (selectedSubRefId == value.ID) 
+                        {
+                        
+                            $availableDays.val(value.AVAILABLE_DAYS);
+                        }
+                    }
+                    else{
+                        if (selectedSubNameId == value.SUB_NAME) {
+                            console.log(value.AVAILABLE_DAYS);
+                            $availableDays.val(value.AVAILABLE_DAYS);
+                        }
                     }
                 });
             }

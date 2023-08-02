@@ -59,7 +59,51 @@ window.nepaliCalendar = (function ($) {
                 '10': {from: "2021-01-14", to: "2021-02-12"},
                 '11': {from: "2021-02-13", to: "2021-03-13"},
                 '12': {from: "2021-03-14", to: "2021-04-13"}
-            }
+            },
+			"2078": {
+			'01': {from: "2021-04-14", to: "2021-05-14"},
+			'02': {from: "2021-05-15", to: "2021-06-14"},
+			'03': {from: "2021-06-15", to: "2021-07-15"},
+			'04': {from: "2021-07-16", to: "2021-08-16"},
+			'05': {from: "2021-08-17", to: "2021-09-16"},
+			'06': {from: "2021-09-17", to: "2021-10-17"},
+			'07': {from: "2021-10-18", to: "2021-11-16"},
+			'08': {from: "2021-11-17", to: "2021-12-15"},
+			'09': {from: "2021-12-16", to: "2022-01-14"},
+			'10': {from: "2022-01-15", to: "2022-02-12"},
+			'11': {from: "2022-02-13", to: "2022-03-14"},
+			'12': {from: "2022-03-15", to: "2022-04-13"}
+			},
+			"2079": {
+			'01': {from: "2022-04-14", to: "2022-05-14"},
+			'02': {from: "2022-05-15", to: "2022-06-14"},
+			'03': {from: "2022-06-15", to: "2022-07-16"},
+			'04': {from: "2022-07-17", to: "2022-08-16"},
+			'05': {from: "2022-08-17", to: "2022-09-16"},
+			'06': {from: "2022-09-17", to: "2022-10-17"},
+			'07': {from: "2022-10-18", to: "2022-11-16"},
+			'08': {from: "2022-11-17", to: "2022-12-15"},
+			'09': {from: "2022-12-16", to: "2023-01-14"},
+			'10': {from: "2023-01-15", to: "2023-02-12"},
+			'11': {from: "2023-02-13", to: "2023-03-14"},
+			'12': {from: "2023-03-15", to: "2023-04-13"}
+			},
+			
+			"2080": {
+			'01': {from: "2023-04-14", to: "2023-05-14"},
+			'02': {from: "2023-05-15", to: "2023-06-15"},
+			'03': {from: "2023-06-16", to: "2023-07-16"},
+			'04': {from: "2023-07-17", to: "2023-08-17"},
+			'05': {from: "2023-08-18", to: "2023-09-17"},
+			'06': {from: "2023-09-18", to: "2023-10-17"},
+			'07': {from: "2023-10-18", to: "2023-11-16"},
+			'08': {from: "2023-11-17", to: "2023-12-16"},
+			'09': {from: "2023-12-17", to: "2024-01-14"},
+			'10': {from: "2024-01-15", to: "2024-02-12"},
+			'11': {from: "2024-02-13", to: "2024-03-13"},
+			'12': {from: "2024-03-14", to: "2024-04-12"}
+			}
+			
         },
         "E": {
             "2019":
@@ -109,14 +153,14 @@ window.nepaliCalendar = (function ($) {
 
     var weekday = null;
     var months = {
-        "N": {'01': 'Baishakh',
-            '02': 'Jestha',
-            '03': 'Asar',
+        "N": {'01': 'Baisakh',
+              '02': 'Jestha',
+              '03': 'Asar',
             '04': 'Shrawan',
             '05': 'Bhadra',
             '06': 'Aswin',
             '07': 'Kartik',
-            '08': 'Mansir',
+            '08': 'Mangshir',
             '09': 'Poush',
             '10': 'Magh',
             '11': 'Falgun',
@@ -262,7 +306,21 @@ window.nepaliCalendar = (function ($) {
                 }
             }
             $month.html('');
-            for (var i in months) {
+           // for (var i in months) {
+                //if (i == currentMonth) {
+               //     $month.append($("<option selected='selected'></option>").val(i).text(months[i]));
+               // } else {
+              //      $month.append($("<option></option>").val(i).text(months[i]));
+             //   }
+            //}
+ for (var i = 1; i < 13; i++) {
+               var len = i.toString().length;
+            
+                if (len == 1) {
+                    i = '0'+ i;
+                }
+                // console.log(i);
+                // break;
                 if (i == currentMonth) {
                     $month.append($("<option selected='selected'></option>").val(i).text(months[i]));
                 } else {
@@ -346,6 +404,10 @@ window.nepaliCalendar = (function ($) {
                     $date.find('.in-time').html(value.IN_TIME);
                     $date.find('.out-time').html(value.OUT_TIME);
                     $date.find('.status').html(value.ATTENDANCE_STATUS);
+					if (value.SP_ID !== null) {
+                        $date.css('background-color', '#FF00FF');
+                        $date.children().css('background-color', '#FF00FF');
+                    }
                     if (value.OVERALL_STATUS == 'DO') {
                         $date.css('background-color', '#ADFF2F');
                         $date.children().css('background-color', '#ADFF2F');

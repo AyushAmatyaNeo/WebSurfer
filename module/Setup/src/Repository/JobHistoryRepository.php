@@ -203,6 +203,7 @@ class JobHistoryRepository implements RepositoryInterface {
         $select->order("E.FIRST_NAME,H.START_DATE ASC");
         $statement = $sql->prepareStatementForSqlObject($select);
         $result = $statement->execute($boundedParams);
+        // echo '<pre>';print_r($statement);die;
         return $result;
     }
 
@@ -344,7 +345,7 @@ class JobHistoryRepository implements RepositoryInterface {
 
     function fetchBeforeStartDate($date, $employeeId) {
         $boundedParams = [];
-        $boundedParams['date'] = $date;
+        $boundedParams['bDate'] = $date;
         $boundedParams['employeeId'] = $employeeId;
         $result = EntityHelper::rawQueryResult($this->adapter, "
             SELECT * FROM
@@ -363,7 +364,7 @@ class JobHistoryRepository implements RepositoryInterface {
               H.RETIRED_FLAG,
               H.DISABLED_FLAG
             FROM HRIS_JOB_HISTORY H
-            WHERE H.START_DATE< :date
+            WHERE H.START_DATE< :bDate
             AND H.EMPLOYEE_ID = :employeeId
             ORDER BY H.START_DATE DESC)
             WHERE ROWNUM        =1", $boundedParams);

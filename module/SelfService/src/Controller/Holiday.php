@@ -20,9 +20,12 @@ class Holiday extends HrisController {
 
     public function indexAction() {
         $request = $this->getRequest();
+
         if ($request->isPost()) {
             try {
                 $rawList = $this->repository->selectAll($this->employeeId);
+                print_r($rawList);die;
+
                 $holidays = Helper::extractDbData($rawList);
                 return new JsonModel(['success' => true, 'data' => $holidays, 'error' => '']);
             } catch (Exception $e) {

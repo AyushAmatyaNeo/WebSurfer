@@ -53,6 +53,7 @@ class LeaveReportCard extends HrisController {
                 $list = Helper::extractDbData($rawList);
                 $rawLeaves = $this->repository->fetchLeaves($employee, $data['data']['leaveId'],$data['data']['leaveYear']);
                 $leaves = Helper::extractDbData($rawLeaves);
+				echo '<pre>'; print_r($list); die;
                 return new JsonModel([
                     "success" => true,
                     "data" => $list,

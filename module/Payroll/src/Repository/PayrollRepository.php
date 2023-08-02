@@ -559,5 +559,42 @@ FROM HRIS_MONTH_CODE  where MONTH_ID=(:monthId-1)";
         }
         return $resultList[0]['IS_REMOTE'];
     }
+	    public function getOpeningGradeQty($employeeId) {
+        $boundedParameter = [];
+        $boundedParameter['employeeId'] = $employeeId;
+
+        //$sql = "SELECT OPENING_GRADE FROM HRIS_EMPLOYEE_GRADE_INFO WHERE EMPLOYEE_ID = :employeeId";
+        $sql = "select (additional_grade + opening_grade) as OPENING_GRADE from HRIS_EMPLOYEE_GRADE_INFO  WHERE EMPLOYEE_ID = :employeeId";
+
+        $resultList = $this->rawQuery($sql, $boundedParameter);
+         /*if (!(sizeof($resultList) == 1)) {
+            throw new Exception('No Report Found.');
+        }*/
+        // echo '<pre>';print_r($resultList);die;
+        if(empty($resultList) == 1){
+            return 0;
+        } else {
+            return $resultList[0]['OPENING_GRADE'];
+        }
+        
+
+    }
+
+    public function fetchDearnessSalary($employeeId, $sheetNo) {
+        $boundedParameter = [];
+        $boundedParameter['employeeId'] = $employeeId;
+        $boundedParameter['sheetNo'] = $sheetNo;
+        $sql = "
+                SELECT NVL(DEARNESS_ALLOWANCE,0) AS DEARNESS_ALLOWANCE
+                FROM HRIS_SALARY_SHEET_EMP_DETAIL
+                WHERE EMPLOYEE_ID=:employeeId
+                AND SHEET_NO = :sheetNo
+                ";
+        $resultList = $this->rawQuery($sql, $boundedParameter);
+        if (!(sizeof($resultList) == 1)) {
+            throw new Exception('No Report Found.');
+        }
+        return $resultList[0]['DEARNESS_ALLOWANCE'];
+    }
     
 }

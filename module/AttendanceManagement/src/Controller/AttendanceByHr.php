@@ -62,6 +62,7 @@ class AttendanceByHr extends HrisController {
     public function indexAction() {
         $shiftRepo = new ShiftRepository($this->adapter);
         $shiftList = iterator_to_array($shiftRepo->fetchAll(), false);
+		//print_r($this->acl); die;
         return Helper::addFlashMessagesToArray($this, [
                 'status' => $this->getStatusSelect(),
                 'presentStatus' => $this->getPresentStatusSelect(),

@@ -7,11 +7,12 @@ use Application\Model\Model;
 use Payroll\Model\MonthlyValueDetail;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\TableGateway\TableGateway;
+use Application\Repository\HrisRepository;
 
-class MonthlyValueDetailRepo {
+class MonthlyValueDetailRepo extends HrisRepository {
 
-    private $adapter;
-    private $gateway;
+    protected $adapter;
+    protected $gateway;
 
     public function __construct(AdapterInterface $adapter) {
         $this->adapter = $adapter;
@@ -120,6 +121,121 @@ class MonthlyValueDetailRepo {
         $sql = "SELECT * FROM HRIS_MONTH_CODE  WHERE FISCAL_YEAR_ID=:fiscalYearId ORDER BY FISCAL_YEAR_MONTH_NO";
         $statement = $this->adapter->query($sql);
         return $statement->execute($boundedParameter);
+    }
+	
+	public function getMonthlyValueDetailById($monthId, $fiscalYearId, $pivotString, $emp){
+      $searchCondition = EntityHelper::getSearchConditonBounded($emp['companyId'], $emp['branchId'], $emp['departmentId'], $emp['positionId'], $emp['designationId'], $emp['serviceTypeId'], $emp['serviceEventTypeId'], $emp['employeeTypeId'], $emp['employeeId'], $emp['genderId']);
+        $boundedParameter = [];
+        $boundedParameter=array_merge($boundedParameter, $searchCondition['parameter']);
+
+        $empQuery = "SELECT E.EMPLOYEE_ID FROM HRIS_EMPLOYEES E WHERE 1=1 {$searchCondition['sql']}";
+        $sql = "SELECT
+    *
+FROM
+    (
+        SELECT
+            e.employee_id,
+            mvd.mth_value,
+            mvd.mth_id,
+            e.employee_code,
+            e.seniority_level,
+            e.full_name
+        FROM
+            hris_monthly_value_detail mvd
+            RIGHT JOIN hris_employees e ON ( e.employee_id = mvd.employee_id
+                                             AND mvd.fiscal_year_id = :fiscalYearId and mvd.month_id = :monthId)
+        WHERE
+            e.status = 'E'
+            AND e.employee_id IN ($empQuery)
+    ) PIVOT (
+        MAX (mth_value)
+        FOR mth_id
+        IN ($pivotString)
+    )
+ORDER BY
+    seniority_level ASC";
+// echo $sql; die;
+      $boundedParameter['monthId'] = $monthId;
+      $boundedParameter['fiscalYearId'] = $fiscalYearId;
+
+      return $this->rawQuery($sql, $boundedParameter);
+    }
+
+    public function getColumns($mth_id){
+      $mth_ids = ':M_' . implode(',:M_', $mth_id);
+
+      $boundedParameter = [];
+      for($i = 0; $i < count($mth_id); $i++){
+        $boundedParameter['M_'.$mth_id[$i]] = $mth_id[$i];
+      }
+
+      $sql = "select mth_id, mth_edesc, 'M_'||mth_id as title from hris_monthly_value_setup where mth_id in ($mth_ids)";
+
+      return $this->rawQuery($sql, $boundedParameter);
+    }
+
+    public function postMonthlyValueDetailById($data, $fiscalYearId, $monthId) {
+        $monthlyValueId = $data['monthlyValueId'];
+        $employeeId = $data['employeeId'];
+        if($data['value'] == null || $data['value'] == ''){
+          $sql = "DELETE FROM HRIS_MONTHLY_VALUE_DETAIL 
+                  WHERE MTH_ID       = $monthlyValueId
+                  AND EMPLOYEE_ID    = $employeeId
+                  AND FISCAL_YEAR_ID = $fiscalYearId
+                  AND MONTH_ID = $monthId";
+        }
+        else{
+          $value = $data['value'];
+          $sql = "
+                DECLARE
+                  V_MTH_ID HRIS_MONTHLY_VALUE_DETAIL.MTH_ID%TYPE := $monthlyValueId;
+                  V_EMPLOYEE_ID HRIS_MONTHLY_VALUE_DETAIL.EMPLOYEE_ID%TYPE := $employeeId;
+                  V_MTH_VALUE HRIS_MONTHLY_VALUE_DETAIL.MTH_VALUE%TYPE := $value;
+                  V_FISCAL_YEAR_ID HRIS_MONTHLY_VALUE_DETAIL.FISCAL_YEAR_ID%TYPE := $fiscalYearId;
+                  V_MONTH_ID HRIS_MONTHLY_VALUE_DETAIL.MONTH_ID%TYPE := $monthId;
+                  V_OLD_MTH_VALUE HRIS_MONTHLY_VALUE_DETAIL.MTH_VALUE%TYPE;
+                BEGIN
+                  SELECT MTH_VALUE
+                  INTO V_OLD_MTH_VALUE
+                  FROM HRIS_MONTHLY_VALUE_DETAIL
+                  WHERE MONTH_ID       = V_MONTH_ID
+                  AND EMPLOYEE_ID    = V_EMPLOYEE_ID
+                  AND FISCAL_YEAR_ID = V_FISCAL_YEAR_ID
+                  AND MTH_ID = V_MTH_ID;
+                  
+                  UPDATE HRIS_MONTHLY_VALUE_DETAIL
+                  SET MTH_VALUE      = V_MTH_VALUE
+                  WHERE MTH_ID       = V_MTH_ID
+                  AND EMPLOYEE_ID    = V_EMPLOYEE_ID
+                  AND FISCAL_YEAR_ID = V_FISCAL_YEAR_ID
+                  AND  MONTH_ID       = V_MONTH_ID;
+                  
+                EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                  INSERT
+                  INTO HRIS_MONTHLY_VALUE_DETAIL
+                    (
+                      MTH_ID,
+                      EMPLOYEE_ID,
+                      FISCAL_YEAR_ID,
+                      MTH_VALUE,
+                      MONTH_ID,
+                      CREATED_DT
+                    )
+                    VALUES
+                    (
+                      V_MTH_ID,
+                      V_EMPLOYEE_ID,
+                      V_FISCAL_YEAR_ID,
+                      V_MTH_VALUE,
+                      V_MONTH_ID,
+                      TRUNC(SYSDATE)
+                    );
+                END;
+            ";
+        }
+        $statement = $this->adapter->query($sql);
+        return $statement->execute();
     }
 
 }

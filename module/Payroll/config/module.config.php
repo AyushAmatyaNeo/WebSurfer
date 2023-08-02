@@ -10,6 +10,7 @@ use Payroll\Controller\SalarySheetController;
 use Payroll\Controller\ExcelUploadController;
 use Payroll\Controller\SalarySheetLockController;
 use Payroll\Controller\TaxSheetController;
+use Payroll\Controller\EmployeeGradeController;
 use Zend\Router\Http\Segment;
 
 return [
@@ -21,6 +22,16 @@ return [
                     'route' => '/excelUpload[/:action[/:id]]',
                     'defaults' => [
                         'controller' => ExcelUploadController::class,
+                        'action' => 'index'
+                    ]
+                ]
+            ],
+			'employeeGrade' => [
+                'type' => Segment::class,
+                'options' => [
+                    'route' => '/grade[/:action[/:id]]',
+                    'defaults' => [
+                        'controller' => EmployeeGradeController::class,
                         'action' => 'index'
                     ]
                 ]
@@ -142,6 +153,7 @@ return [
                         'route' => 'monthlyValue',
                         'action' => 'position-wise',
                     ],
+                    
                 ]
             ]
         ],
@@ -178,6 +190,11 @@ return [
                         'label' => 'Position Wise',
                         'route' => 'flatValue',
                         'action' => 'position-wise',
+                    ],
+                    [
+                        'label' => 'Level Wise',
+                        'route' => 'flatValue',
+                        'action' => 'levelWise',
                     ],
                 ]
             ]
@@ -288,6 +305,7 @@ return [
             TaxSheetController::class => ControllerFactory::class,
             ExcelUploadController::class => ControllerFactory::class,
             Controller\VarianceSetupController::class => ControllerFactory::class,
+			EmployeeGradeController::class => ControllerFactory::class,
             Controller\PayrollReportController::class => ControllerFactory::class,
         ],
     ],

@@ -266,6 +266,7 @@ class TravelRequestRepository extends HrisRepository implements RepositoryInterf
         }
         $select->order("TR.REQUESTED_DATE DESC");
         $statement = $sql->prepareStatementForSqlObject($select);
+		//echo '<pre>';print_r($statement);die;
         $result = $statement->execute($boundedParameter);
         return $result;
     }

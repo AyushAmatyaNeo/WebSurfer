@@ -2,15 +2,14 @@
 
 namespace SelfService\Repository;
 
+use Application\Repository\HrisRepository;
 use Application\Helper\EntityHelper;
 use SelfService\Model\BirthdayModel;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\TableGateway\TableGateway;
 
-class BirthdayRepository {
+class BirthdayRepository extends HrisRepository {
 
-    private $tableGateway;
-    private $adapter;
 
     public function __construct(AdapterInterface $adapter) {
         $this->adapter = $adapter;
@@ -89,8 +88,8 @@ class BirthdayRepository {
 
         $boundedParameter = [];
         $boundedParameter['employeeId'] = $employeeId;
-
-        $result = $this->rawQuery($sql, $boundedParameter);
+        //print_r($boundedParameter);die;
+         $result = $this->rawQuery($sql, $boundedParameter);
 
         $list = [];
 
@@ -116,12 +115,14 @@ class BirthdayRepository {
 
         $boundedParameter = [];
         $boundedParameter['employeeId'] = $employeeId;
-        return EntityHelper::rawQueryResult($this->adapter, $sql, $boundedParameter);
-    }
+        return $this->rawQuery($sql, $boundedParameter)[0];
+        }
 
-    public function checkMessagePosted($fromEmployee, $toEmployee) {
+       public function checkMessagePosted($fromEmployee, $toEmployee) {
         $sql = "SELECT count(*) as c FROM HRIS_BIRTHDAY_MESSAGES WHERE FROM_EMPLOYEE=$fromEmployee "
-                . "AND TO_EMPLOYEE=$toEmployee";
+                . "AND TO_EMPLOYEE=$toEmployee and created_dt between (select start_date from hris_fiscal_years where fiscal_year_id=(select max(fiscal_year_id) from hris_fiscal_years))
+                and (select end_date from hris_fiscal_years where fiscal_year_id=(select max(fiscal_year_id) from hris_fiscal_years))";
+                // echo '<pre>';print_r($sql);die;
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
         return $result->current();

@@ -262,7 +262,7 @@ class HrisRepository {
                 $sql = "{$conditonType} {$colName} = :{$tempname} ";
             }
             $returnData['sql']=$sql;
-            $returnData['parameter']=$colValue;
+            $returnData['parameter']=[$tempname=>$colValue];
             return $returnData;
         }
     }

@@ -5,6 +5,9 @@ namespace Setup\Repository;
 use Application\Model\Model;
 use Application\Repository\RepositoryInterface;
 use Zend\Db\Adapter\AdapterInterface;
+use Zend\Db\Sql\Expression;
+use Zend\Db\Sql\Select;
+use Zend\Db\Sql\Sql;
 use Zend\Db\TableGateway\TableGateway;
 use Setup\Model\ServiceEventType;
 
@@ -14,6 +17,7 @@ class ServiceEventTypeRepository implements RepositoryInterface
     public function __construct(AdapterInterface $adapter)
     {
         $this->tableGateway=new TableGateway(ServiceEventType::TABLE_NAME,$adapter);
+        $this->adapter = $adapter;
     }
 
     public function add(Model $model)
@@ -31,7 +35,19 @@ class ServiceEventTypeRepository implements RepositoryInterface
 
     public function fetchAll()
     {
-        return $this->tableGateway->select();
+        $sql = new Sql($this->adapter);
+        $select = $sql->select();
+        $select->columns([
+            new Expression("S.SERVICE_EVENT_TYPE_ID as SERVICE_EVENT_TYPE_ID"),
+            new Expression("S.SERVICE_EVENT_TYPE_CODE as SERVICE_EVENT_TYPE_CODE"),
+            new Expression("S.SERVICE_EVENT_TYPE_NAME as SERVICE_EVENT_TYPE_NAME"),
+        ], true);
+
+        $select->from(['S' => ServiceEventType::TABLE_NAME]);
+        $select->where(["S.STATUS" => 'E']);
+        $statement = $sql->prepareStatementForSqlObject($select);
+
+        return $statement->execute();
     }
 
     public function fetchById($id)

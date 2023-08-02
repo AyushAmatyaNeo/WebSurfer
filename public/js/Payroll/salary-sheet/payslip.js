@@ -61,7 +61,7 @@
                 $paySlipBody.append($row);
             }
             $paySlipBody.append($(`<tr>
-                                <td>Total Addition:</td>
+                                <td>Gross Salary:</td>
                                 <td>${add}</td>
                                 <td>Total Deduction:</td>
                                 <td>${sub}</td>
@@ -69,12 +69,18 @@
                                  <td>${net}</td>`));
 
         }
+		
+		var showEmpDetail = function ($data) {
+            for (var i in $data) {
+                $(`td[key='${i}'] `).html($data[i]);
+            }
+        }
+		
         $viewBtn.on('click', function () {
             var selectedYearText=$("#fiscalYearId option:selected" ).text();
             var selectedMonthText=$("#monthId option:selected" ).text();
             var selectNameText=$("#employeeId option:selected").text();
-            var displayYearMonthtext='Payslip of '+selectNameText+' for '+selectedMonthText+' '+selectedYearText;
-            $('#yearMonthDetails').html(displayYearMonthtext);
+            
             
             var monthId = $month.val();
             var employeeId = $employeeId.val();
@@ -89,7 +95,10 @@
                 groupId: employee['GROUP_ID'],
                 salaryTypeId: salaryTypeId
             }).then(function (response) {
-                showPaySlip(response.data);
+                var displayYearMonthtext='Payslip of '+selectNameText+' for '+selectedMonthText+' '+selectedYearText+'('+response.data['currentMonthDate']['FROM_DATE']+'/'+response.data['currentMonthDate']['TO_DATE']+')';
+            $('#yearMonthDetails').html(displayYearMonthtext);
+                showPaySlip(response.data['pay-detail']);
+                showEmpDetail(response.data['emp-detail']);
             }, function (error) {
 
             });

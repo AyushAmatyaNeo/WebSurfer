@@ -27,10 +27,10 @@ class ExcelUploadRepository extends HrisRepository{
     
     public function postPayValuesModifiedDetail($data) {
         $boundedParameter = [];
-        $boundedParameter['id'] = $data['monthId'];
-        $boundedParameter['salary'] = $data['employeeId'];
-        $boundedParameter['id'] = $data['payId'];
-        $boundedParameter['salary'] = $data['val'];
+        $boundedParameter['monthId'] = $data['monthId'];
+        $boundedParameter['employeeId'] = $data['employeeId'];
+        $boundedParameter['payId'] = $data['payId'];
+        $boundedParameter['val'] = $data['val'];
         $boundedParameter['salaryTypeId'] = $data['salaryTypeId'];
         $sql = "
                 DECLARE
@@ -84,5 +84,14 @@ class ExcelUploadRepository extends HrisRepository{
         $sql = "SELECT SALARY_TYPE_ID, SALARY_TYPE_NAME FROM HRIS_SALARY_TYPE";
         $statement = $this->adapter->query($sql);
         return $statement->execute();
+    }
+	
+	public function updateAttribute($id, $col, $val, $basedOn){
+      $boundedParameter = [];
+      $boundedParameter['id'] = $id;
+      $boundedParameter['val'] = $val;
+      $sql = $basedOn == 1 ? "UPDATE HRIS_EMPLOYEES SET $col = :val WHERE EMPLOYEE_ID = :id" : "UPDATE HRIS_EMPLOYEES SET $col = :val WHERE EMPLOYEE_ID = (select employee_Id from HRIS_EMPLOYEES where employee_code = :id and status = 'E' and rownum = 1)" ;
+      $statement = $this->adapter->query($sql);
+      $statement->execute($boundedParameter);
     }
 }

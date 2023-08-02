@@ -85,8 +85,10 @@ class LeaveBalance extends HrisController {
             $request = $this->getRequest();
             $data = $request->getPost();
             $leaveList = $this->repository->getAllLeave(false, $data['leaveId'],$data['leaveYear']);
+			
             $leaves = Helper::extractDbData($leaveList);
             $rawList = $this->repository->getPivotedList($data);
+			//echo'<pre>';print_r($rawList);die;
             $list = Helper::extractDbData($rawList);
             return new JsonModel([
                 "success" => true,

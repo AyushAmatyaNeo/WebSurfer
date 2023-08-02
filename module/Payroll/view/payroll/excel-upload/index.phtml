@@ -26,6 +26,7 @@ $this->headScript()
     document.fiscalYears =<?php echo json_encode($fiscalYears); ?>;
     document.months =<?php echo json_encode($months); ?>;
     document.acl =<?php echo json_encode($acl); ?>;
+	document.maxFiscalYearId =<?php echo $maxFiscalYearId; ?>;
 </script>
 
 <div class="page-bar">
@@ -42,12 +43,18 @@ $this->headScript()
                     </div>
                 </div>
                 <div class="portlet-body">
+				
+				
+				
+				
                     <div class="row">
-                        <div class="col-sm-2">
+					
+					<div class="col-sm-2">
                             <label>Browse File:
                             <input type="file" name="excelImport" id="excelImport">
                             </label>
                         </div>
+                        
                         <div class="col-sm-2">
                             <label style="width: 100%">Effect On
                             <select id="payHeads" class="form-control" multiple="multiple" name="payHeads"></select>
@@ -80,12 +87,12 @@ $this->headScript()
                             <div class="row">
                                 <span>Based On:</span>
                                 <div class="col-sm-12">
-                                    <label>Employee Id</label>
-                                    <input type="radio" name="basedOn" checked="checked" id="employeeIdBased">
+                                    <label>Official Code</label>
+                                    <input type="radio" name="basedOn"  id="employeeCodeBased">
                                 </div>
                                 <div class="col-sm-12">
-                                    <label>Official Code</label>
-                                    <input type="radio" name="basedOn" id="employeeCodeBased">
+                                    <label>Employee Id</label>
+                                    <input type="radio" name="basedOn" checked="checked"  id="employeeIdBased">
                                 </div>
                             </div>
                         </div>

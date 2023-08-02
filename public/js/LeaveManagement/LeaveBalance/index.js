@@ -15,7 +15,8 @@
             //'EMPLOYEE_ID': 'Id', 
             'FULL_NAME': 'Name',
             'DEPARTMENT_NAME': 'Department',
-            'FUNCTIONAL_TYPE_EDESC': 'Functional Type'
+            'FUNCTIONAL_TYPE_EDESC': 'Functional Type',
+            'POSITION_NAME': ' Position'
         };
 
         var columnOptions = [];
@@ -44,7 +45,8 @@
                 //'EMPLOYEE_ID': 'Id', 
                 'FULL_NAME': 'Name',
                 'DEPARTMENT_NAME': 'Department',
-                'FUNCTIONAL_TYPE_EDESC': 'Functional Type'
+                'FUNCTIONAL_TYPE_EDESC': 'Functional Type',
+                'POSITION_NAME': ' Position'
             };
             var flag, flag2;
             var columnsList;

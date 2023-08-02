@@ -47,6 +47,7 @@
             });
             app.populateSelect($monthId, selectedYearMonthList, 'MONTH_ID', 'MONTH_EDESC', 'Months');
     	});
+		
     	var columns = [];
     	columns.push({field: "A", title: "ID", width: 80});
     	columns.push({field: "B", title: "NAME", width: 120});

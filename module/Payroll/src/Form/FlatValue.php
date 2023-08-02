@@ -42,7 +42,7 @@ class FlatValue {
 
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
-     * @Annotation\Options({"value_options":{"P":"Position Wise","E":"Employee Wise"},"label":"Assign Type"})
+     * @Annotation\Options({"value_options":{"P":"Position Wise","E":"Employee Wise","L":"Level Wise"},"label":"Assign Type"})
      * @Annotation\Attributes({ "id":"assignType","class":"form-control"})
      */
     public $assignType;

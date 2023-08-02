@@ -103,7 +103,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday One"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Sunday"})
      * @Annotation\Attributes({ "id":"weekDay1"})
      */
     public $weekday1;
@@ -111,7 +111,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Two"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Monday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay2", "class":"form-control"})
      */
@@ -120,7 +120,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Three"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Tuesday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay3"})
      */
@@ -129,7 +129,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Four"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Wednesday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay4"})
      */
@@ -138,7 +138,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Five"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Thursday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay5"})
      */
@@ -147,7 +147,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Six"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Friday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay6"})
      */
@@ -156,7 +156,7 @@ class ShiftForm {
     /**
      * @Annotation\Type("Zend\Form\Element\Radio")
      * @Annotation\Filter({"name":"StringTrim","name":"StripTags"})
-     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Weekday Seven"})
+     * @Annotation\Options({"value_options":{"N":"Normal","H":"Half Day","DAY_OFF":"Day Off"},"label":"Saturday"})
      * @Annotation\Required(true)
      * @Annotation\Attributes({ "id":"weekDay7"})
      */

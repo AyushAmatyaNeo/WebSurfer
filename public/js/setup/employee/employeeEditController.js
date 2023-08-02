@@ -425,16 +425,16 @@
                     }
                 }
                 $scope.submitExperience = function () {
-                    if ($scope.employeeExperienceForm.$valid && $scope.experienceFormList.length > 0) {
+                    if ($scope.employeeExperienceForm.$valid && $scope.salaryHistoryFormList.length > 0) {
                         console.log("hellow");
                         $scope.experienceListEmpty = 1;
-                        if (($scope.experienceFormList.length == 1 && angular.equals($scope.experienceFormTemplate, $scope.experienceFormList[0])) || $scope.experienceFormList.length == 0) {
+                        if (($scope.salaryHistoryFormList.length == 1 && angular.equals($scope.experienceFormTemplate, $scope.experienceFormList[0])) || $scope.experienceFormList.length == 0) {
                             console.log("app log", "The form is not filled");
                             $scope.experienceListEmpty = 0;
                         }
-                        console.log($scope.experienceFormList);
+                        console.log($scope.salaryHistoryFormList);
                         window.app.pullDataById(document.submitExperienceDtlLink, {
-                            experienceList: $scope.experienceFormList,
+                            experienceList: $scope.salaryHistoryFormList,
                             employeeId: parseInt(employeeId),
                             experienceListEmpty: parseInt($scope.experienceListEmpty)
                         }).then(function (success) {
@@ -445,11 +445,138 @@
                         }, function (failure) {
                             console.log(failure);
                         });
-                    } else if ($scope.experienceFormList.length == 0) {
+                    } else if ($scope.salaryHistoryFormList.length == 0) {
                         $window.location.href = document.urlSubmitExperience;
                     }
                 }
 
+                // for employee salary history [add and delete function]
+                $scope.salaryHeadList = document.salaryHead;
+                $scope.salaryHistoryFormList = [];
+                $scope.counterSalaryHistory = '';
+                $scope.salaryHistoryFormTemplate = {
+                    id: 0,
+                    salaryHeadId: $scope.salaryHeadList[0],
+                    amount: "",
+                    fromDate: "",
+                    toDate: "",
+                    checkbox: "checkboxs0",
+                    checked: false,
+                    effectByWorkingDaysChecked: false,
+                    isDefaultHeadChecked: false,
+                    isEnableDaysChecked: false
+                };
+                $scope.addDatePicker = function (fromId, toId) {
+                    app.startEndDatePicker(fromId, toId);
+                }
+                if (employeeId !== 0) {
+                    window.app.pullDataById(document.pullSalaryHistoryDetailLink, {
+                        'employeeId': employeeId
+                    }).then(function (success) {
+                        $scope.$apply(function () {
+                            var salaryHistoryList = success.data;
+                            var salaryHistoryNum = success.num;
+                            console.log(salaryHistoryList);
+                            if (salaryHistoryNum > 0) {
+                                $scope.counterSalaryHistory = salaryHistoryNum;
+                                for (var j = 0; j < salaryHistoryNum; j++) {
+                                    if (salaryHistoryList[j].ORGANIZATION_TYPE == 'Financial') {
+                                        var salaryHeadList = $scope.salaryHeadList[0];
+                                    } else if (salaryHistoryList[j].ORGANIZATION_TYPE == 'Non-Financial') {
+                                        var salaryHeadList = $scope.salaryHeadList[1];
+                                    }
+                                    let tempIndex = $scope.salaryHeadList.findIndex(record => record.PAY_ID === salaryHistoryList[j].PAY_ID);
+                                    $scope.salaryHistoryFormList.push(angular.copy({
+                                        id: salaryHistoryList[j].ID,
+                                        salaryHeadId: $scope.salaryHeadList[tempIndex],
+                                        fromDate: salaryHistoryList[j].FROM_DATE,
+                                        amount: parseFloat(salaryHistoryList[j].AMOUNT),
+                                        toDate: salaryHistoryList[j].TO_DATE,
+                                        checkbox: "checkboxs" + j,
+                                        checked: false,
+                                        effectByWorkingDaysChecked: salaryHistoryList[j].EFFECT_BY_WORKING_DAY == 'Y' ? true : false,
+                                        isDefaultHeadChecked: salaryHistoryList[j].IS_DEFAULT_HEAD == 'Y' ? true : false,
+                                        isEnableDaysChecked: salaryHistoryList[j].IS_ENABLE == 'Y' ? true : false
+                                    }));
+                                }
+                            } else {
+                                $scope.counterSalaryHistory = 1;
+                                $scope.salaryHistoryFormList.push(angular.copy($scope.salaryHistoryFormTemplate));
+                            }
+                        });
+                    }, function (failure) {
+                        console.log(failure);
+                    });
+                } else {
+                    $scope.counterSalaryHistory = 1;
+                    $scope.salaryHistoryFormList.push(angular.copy($scope.salaryHistoryFormTemplate));
+                }
+
+                $scope.addSalaryHistory = function () {
+                    $scope.salaryHistoryFormList.push(angular.copy({
+                        id: 0,
+                        salaryHeadId: $scope.salaryHeadList[0],
+                        amount: "",
+                        fromDate: "",
+                        toDate: "",
+                        checkbox: "checkboxs" + $scope.counterSalaryHistory,
+                        checked: false,
+                        effectByWorkingDaysChecked: false,
+                        isDefaultHeadChecked: false,
+                        isEnableDaysChecked: false
+                    }));
+                    $scope.counterSalaryHistory++;
+                };
+                $scope.deleteSalaryHistory = function () {
+                    var tempE = 0;
+                    var lengthE = $scope.salaryHistoryFormList.length;
+                    for (var i = 0; i < lengthE; i++) {
+                        if ($scope.salaryHistoryFormList[i - tempE].checked) {
+                            var id = $scope.salaryHistoryFormList[i - tempE].id;
+                            if (id != 0) {
+                                window.app.pullDataById(document.deleteSalaryHistoryDtlLink, {
+                                    "id": id
+                                }).then(function (success) {
+                                    $scope.$apply(function () {
+                                        console.log(success.data);
+                                    });
+                                }, function (failure) {
+                                    console.log(failure);
+                                });
+                            }
+                            $scope.salaryHistoryFormList.splice(i - tempE, 1);
+                            tempE++;
+                        }
+                    }
+                }
+                
+                $scope.submitSalaryHistory = function () {
+                    if ($scope.employeeSalaryHistoryForm.$valid && $scope.salaryHistoryFormList.length > 0) {
+                        console.log("hellow salary history form");
+                        $scope.salaryHistoryListEmpty = 1;
+                        if (($scope.salaryHistoryFormList.length == 1 && angular.equals($scope.salaryHistoryFormTemplate, $scope.salaryHistoryFormList[0])) || $scope.salaryHistoryFormList.length == 0) {
+                            console.log("app log", "The salary form is not filled");
+                            $scope.salaryHistoryListEmpty = 0;
+                        }
+                        console.log($scope.salaryHistoryFormList);
+                        window.app.pullDataById(document.submitSalaryHistoryDtlLink, {
+                            salaryHistoryList: $scope.salaryHistoryFormList,
+                            employeeId: parseInt(employeeId),
+                            salaryHistoryListEmpty: parseInt($scope.salaryHistoryListEmpty)
+                        }).then(function (success) {
+                            $scope.$apply(function () {
+                                console.log(success.data);
+                                $window.location.href = document.urlSubmitSalaryHistory;
+                            });
+                        }, function (failure) {
+                            console.log(failure);
+                        });
+                    } else if ($scope.experienceFormList.length == 0) {
+                        $window.location.href = document.urlSubmitSalaryHistory;
+                    }
+                }
+                console.log($scope.salaryHistoryFormList);
+                //for employee salary history end
 
                 // for employee training [add and delete function]
                 $scope.trainingFormList = [];

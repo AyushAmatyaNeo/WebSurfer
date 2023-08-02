@@ -2,7 +2,9 @@ window.app = (function ($, toastr, App) {
     "use strict";
     $(document).ready(function () {
         App.setAssetsPath(document.basePath + '/assets/');
-        
+        $(document).on("wheel", "input[type=number]", function (e) {
+			$(this).blur();
+		});
         // only for soaltee start
 //        $('#functionalTypeId').parent().children(':first-child').html('Main Dep(Funct Type)');
 //        $('#branchId').parent().children(':first-child').prepend('<button id="filBranch">Fill</button>');
@@ -1007,7 +1009,7 @@ window.app = (function ($, toastr, App) {
 
     };
 
-    var exportToPDF = function ($table, col, fileName, pageSize, fn) {
+    var exportToPDF = function ($table, col, fileName, pageSize, fn, sumColumns = [], showSn = false) {
         if (!checkForFileExt(fileName)) {
             fileName = fileName + ".pdf";
         }
@@ -1047,6 +1049,32 @@ window.app = (function ($, toastr, App) {
                 }
             });
             body.push(row);
+        }
+		
+		//append SN to each row
+        if(showSn){
+            head.unshift("SN");
+            colWidths.push('auto');
+            let SN = 0;
+            $.each(body, function(k, v){
+                if(k == 0){ return; }
+                SN += 1;
+                body[k].unshift(SN);
+            });
+        }
+        
+        //append sum row
+        if(sumColumns.length > 0){
+            let sumRow = head.map(x => null);
+            $.each(sumColumns, function(k, v){
+                let index = head.indexOf(col[v]);
+                sumRow[index] = 0;
+                $.each(body, function(k1, v1){
+                    if(k1 == 0){ return; }
+                    sumRow[index] += parseFloat(v1[index]);
+                });
+            });
+            body.push(sumRow);
         }
         
         var docDefinition = {
@@ -1198,7 +1226,7 @@ window.app = (function ($, toastr, App) {
         pdfMake.createPdf(docDefinition).download(fileName);
     };
 
-    var excelExport = function ($table, col, fileName, exportType = {}) {
+    var excelExport = function ($table, col, fileName, exportType = {}, sumColumns = [], showSn = false) {
         if (!checkForFileExt(fileName)) {
             fileName = fileName + ".xlsx";
         }
@@ -1258,6 +1286,36 @@ window.app = (function ($, toastr, App) {
                 }
             ]
         });
+		
+		//append SN to each row
+        if(showSn){
+            header.unshift({value: "SN"});
+            workbook.options.sheets[0].columns.push({autoWidth: 'auto'});
+            let SN = 0;
+            $.each(workbook.options.sheets[0].rows, function(k, v){
+                if(k == 0){ return; }
+                SN += 1;
+                workbook.options.sheets[0].rows[k].cells.unshift({value: SN});
+            });
+        }
+
+        // append sum row
+        if(sumColumns.length > 0){
+            let sumRow = [];
+            $.each(workbook.options.sheets[0].rows[0].cells, function(k, v){
+                sumRow.push({value: ""});
+            })
+            $.each(sumColumns, function(k, v){
+                let index = header.findIndex(i => i.value == col[v]);
+                sumRow[index]['value'] = 0;
+                $.each(rows, function(k1, v1){
+                    if(k1 == 0){ return; }
+                    sumRow[index]['value'] += parseFloat(v1['cells'][index]['value']);
+                });
+            });
+            workbook.options.sheets[0].rows.push({cells: sumRow});
+        }
+		
         kendo.saveAs({dataURI: workbook.toDataURL(), fileName: fileName});
     };
 

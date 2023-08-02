@@ -54,6 +54,7 @@ class OvertimeRequest extends HrisController {
 
     public function addAction() {
         $request = $this->getRequest();
+        
 
         $model = new Overtime();
         if ($request->isPost()) {

@@ -87,7 +87,7 @@ class Variance {
      * @Annotation\Required(false)
      * @Annotation\Filter({"name":"StripTags","name":"StringTrim"})
      * @Annotation\Options({"label":"Order No"})
-     * @Annotation\Attributes({ "id":"orderNo","class":"form-control","min":"0"})
+     * @Annotation\Attributes({ "id":"orderNo","class":"form-control","min":"0","step":"0.01"})
      */
     public $orderNo;
 

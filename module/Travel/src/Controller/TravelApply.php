@@ -160,7 +160,8 @@ class TravelApply extends HrisController {
             'OV' => 'Office Vehicles',
             'TI' => 'Taxi',
             'BS' => 'Bus',
-            'OF'  => 'On Foot'
+            'OF'  => 'On Foot',
+			'BV' => 'By Vehicle'
         );
         
         $applyOptionValues = [

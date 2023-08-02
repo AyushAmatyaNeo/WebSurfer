@@ -141,8 +141,8 @@
                 template: "<input type='checkbox' id='#:ID#'  class='k-checkbox row-checkbox'><label class='k-checkbox-label' for='#:ID#'></label>",
                 width: 50
             },
-            {field: "COMPANY_NAME", title: "Company"},
-            {field: "DEPARTMENT_NAME", title: "Department"},
+            {field: "BRANCH_NAME", title: "Branch"},
+            //{field: "DEPARTMENT_NAME", title: "Department"},
             {field: "EMPLOYEE_CODE", title: "Code"},
             {field: "EMPLOYEE_NAME", title: "Employee", template: "<span>#: (EMPLOYEE_NAME == null) ? '-' : EMPLOYEE_NAME # </span>"},
             {title: "Attendance Date",

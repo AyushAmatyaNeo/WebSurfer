@@ -62,7 +62,59 @@ $this->headScript()->appendFile($this->basePath('js/Payroll/salary-sheet/payslip
             </div>
         </div>
         <div id="paySlipView" class="margin-top-10">
-            <tr><td colspan="4"><h3><b><span id="yearMonthDetails"></span></b></h3>  </td> </tr>
+            <table class="table table-bordered" id="employee-detail">
+                <tr><td colspan="4"><h3><b><span id="yearMonthDetails"></span></b></h3>  </td> </tr>
+                <tr>
+                    <td>Employee Name</td>
+                    <td key="FULL_NAME"></td>
+                    <td>Date of Join</td>
+                    <td key="JOIN_DATE"></td>
+                </tr>
+                <tr>
+                    <td>Employee ID</td>
+                    <td key="EMPLOYEE_CODE"></td>
+                    <td>Branch</td>
+                    <td key="BRANCH_NAME"></td>
+                </tr>
+
+                <tr>
+                    <td>CIT No</td>
+                    <td key="ID_RETIREMENT_NO"></td>
+                    <td>A/c No</td>
+                    <td key="ACCOUNT_NO"></td>
+                </tr>
+				
+				 <tr>
+                    <td>Present Days</td>
+                    <td key="PRESENT"></td>
+                    <td>Absent Days</td>
+                    <td key="ABSENT"></td>
+                </tr>
+				 <tr>
+                    <td>Holidays</td>
+                    <td key="HOLIDAY"></td>
+                    <td>Salary Days</td>
+                    <td key="#"></td>
+					
+                </tr>
+				
+
+
+                <tr>
+                    <td>PF No</td>
+                    <td key="ID_PROVIDENT_FUND_NO"></td>
+                    <td>PAN No</td>
+                    <td key="ID_PAN_NO"></td>
+
+                </tr>
+
+                <tr>
+                    <td>Position Name</td>
+                    <td key="POSITION_NAME"></td>
+                    <td></td>
+                    <td> </td>
+                </tr>
+            </table>
             <table class="table table-bordered">
                 <thead>
                 <th colspan="2">Addition</th>

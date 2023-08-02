@@ -27,7 +27,10 @@ class HolidayAssign extends HrisController {
                     'searchValues' => EntityHelper::getSearchData($this->adapter),
                     'holidayList' => iterator_to_array($holidayList, false),
                     'acl' => $this->acl,
-                    'employeeDetail' => $this->storageData['employee_detail']
+                    'employeeDetail' => $this->storageData['employee_detail'],
+					'preference' => $this->preference,
+                    'provinces' => EntityHelper::getProvinceList($this->adapter),
+                    'braProv' => EntityHelper::getBranchFromProvince($this->adapter),
         ]);
     }
 

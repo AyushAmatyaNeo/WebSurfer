@@ -1,4 +1,6 @@
 <?php
+use MobileApi\Controller\Dashboard;
+
 $this->headLink()
         ->appendStylesheet($this->basePath('assets/global/plugins/bootstrap-datepicker/css/datepicker3.css'))
         ->appendStylesheet($this->basePath('assets/global/plugins/fullcalendar/fullcalendar.min.css'))
@@ -53,13 +55,22 @@ foreach ($departmentAttendance as $deptAttn) {
         display:none;
     }
 </style>
+<style>
+    .hexcustom {
+    width: 16%;
+}
+.hexagon-bg6 {
+    background-color: #A476D7 ;
+}
+</style>
 
 <script type="text/javascript">
     document.xndr = []; // Gender
     document.xndrhc = []; // Gender Head Count
 <?php foreach ($headCountGender as $ghc) : ?>
-        document.xndr.push('<?php print $ghc['GENDER_NAME']; ?>');
-        document.xndrhc.push(<?php print $ghc['HEAD_COUNT'] ?>);
+    document.xndr.push('<?php print $ghc['GENDER_NAME']; ?>');
+    document.xndrhc.push(<?php print $ghc['HEAD_COUNT'] ?>);
+
 <?php endforeach; ?>
 
     document.odept = []; // Office Department
@@ -69,12 +80,16 @@ foreach ($departmentAttendance as $deptAttn) {
         document.odepthc.push(<?php print $dhc['HEAD_COUNT']; ?>);
 <?php endforeach; ?>
 
-    document.brln = []; // Branch Location
+	document.brln = []; // Branch Location
     document.brlnhc = []; // Department Head Count
 <?php foreach ($headCountLocation as $lhc) : ?>
-        document.brln.push('<?php print $lhc['BRANCH_NAME']; ?>');
+        document.brln.push('<?php print $lhc['EMPLOYEE_ID']; ?>');
         document.brlnhc.push(<?php print $lhc['HEAD_COUNT']; ?>);
 <?php endforeach; ?>
+
+
+   
+
 
     document.deptattn = <?php print json_encode($departmentAttendanceData); ?>; // Departments Attendance
     document.trainingUrl = '<?php print $this->url('trainingAssign', ["action" => 'index']); ?>';
@@ -82,12 +97,16 @@ foreach ($departmentAttendance as $deptAttn) {
     document.leaveUrl = '<?php print $this->url('leavestatus', ["action" => 'index']); ?>';
 </script>
 <script>
+    document.getCurrentDate='<?php echo $this->url('dashboard',['action'=>'getCurrentDate']);?>';
+    document.getEmployessUrl='<?php echo $this->url('dashboard',['action'=>'getTotalEmployee']);?>';
     document.todoAddUrl = '<?php echo $this->url('task', ['action' => 'add']); ?>';
     document.todoUpdateUrl = '<?php echo $this->url('task', ['action' => 'update']); ?>';
     document.todoDeleteUrl = '<?php echo $this->url('task', ['action' => 'delete']); ?>';
     document.todoTaskList = <?php echo json_encode($todoList); ?>;
     document.todoTaskUpdateStatus = '<?php echo $this->url('task', ['action' => 'updateStatus']); ?>';
     document.getAdminDashboardUrl = '<?php echo $this->url('dashboard', ['action' => 'fetchAdminDashBoardDetails']); ?>'
+    document.getPendingDashboardUrl = '<?php echo $this->url('dashboard', ['action' => 'fetchPendingDashBoardDetails']); ?>'
+
 </script>
 <?php
 if ($this->messages && (sizeof($this->messages) > 1)) {
@@ -113,12 +132,17 @@ $wohUrl = $this->url('attendancebyhr', ['action' => 'index', 'id' => 5]);
 $lateInUrl = $this->url('attendancebyhr', ['action' => 'index', 'id' => 6]);
 $earlyOutUrl = $this->url('attendancebyhr', ['action' => 'index', 'id' => 7]);
 $missPunchUrl = $this->url('attendancebyhr', ['action' => 'index', 'id' => 8]);
-$pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
+$empUrl=$this->url('employee');
+$leavePending=$this->url('leavestatus');
+$attendPending=$this->url('attendancestatus');
+$overtimePending=$this->url('calculateOvertime');
+
+
 ?>
 
 <div class="employeedashboard">
     <div class="emplyoee-dashboard col-md-12">
-        <div class="row">
+        <div class="row" >
             <div class="employe-descbox">
                 <div class="col-sm-1 col-md-1 profile_pic">
                     <img id="employeeImage" src="<?php print $this->basePath("img/nobody_m.original.jpg"); ?>">
@@ -129,9 +153,20 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                     <span id="employeeOfficialEmail"></span><br>
                     <span id="employeeDesignationTitle"></span><br>
                     <span id="employeeServiceDate"></span><br>
+                    <span id ="currentDate"></span><br>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-5" >
                     <div title="Today" class="row detailsbox">
+                    <a href="<?php echo $empUrl ?>">
+                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div class="employee_details-box hexagon-bg6">
+                                    <span id="totLEmployees">0</span>
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">Employees</div>
+                                </div>
+                            </div>
+                        </a>
                         <a href="<?php echo $presentUrl ?>">
                             <div  class="col-xs-6 col-sm-3 col-md-2 hexcustom">
                                 <div class="employee_details-box hexagon-bg1" >
@@ -139,6 +174,17 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                                     <div class="face1"></div>
                                     <div class="face2"></div>
                                     <div class="headtitle">Present</div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="<?php echo $presentUrl ?>">
+                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div title="Today" class="employee_details-box hexagon-bg2">
+                                    <span id="employeeAbsentDays">0</span>
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">Absent</div>
                                 </div>
                             </div>
                         </a>
@@ -168,21 +214,14 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                                     <span id="employeeTravelDays">0</span>
                                     <div class="face1"></div>
                                     <div class="face2"></div>
-                                    <div class="headtitle">On Tour</div>
+                                    <div class="headtitle">On Travel</div>
                                 </div>
                             </div>
                         </a>
-                        <a href="<?php echo $wohUrl ?>">
-                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
-                                <div title="Today" class="employee_details-box hexagon-bg5">
-                                    <span id="employeeWOHDays">0</span>
-                                    <div class="face1"></div>
-                                    <div class="face2"></div>
-                                    <div class="headtitle">WOH</div>
-                                </div>
-                            </div>
-                        </a>
+                        
+                       
                     </div>
+                   
                 </div>
                 <div class="col-xs-12  col-sm-7 col-md-3">
                     <div class="col-hris row attendence-box">
@@ -211,13 +250,15 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                                     </div>
                                 </li>
                             </a>
+
+                            
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <div class="row">
         <div class="col-md-6">
             <div class="row chart-row">
@@ -241,7 +282,10 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                             <div class="col-md-6  col-chart-loc-hc">
                                 <div id="chart-location-headcount" style="height:400px"></div>
                             </div>
-                            <div class="col-md-6  col-chart-xndr-hc">
+                            <!-- <div class="col-md-6  col-chart-emp-hc">
+                                <div id="chart-employee-headcount" style="height:400px"></div>
+                            </div> -->
+                            <div class="col-md-6  col-chart-xndr-hc" >
                                 <div id="chart-gender-headcount" style="height:400px"></div>
                             </div>
                             <div class="clearfix"></div>
@@ -401,7 +445,65 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
         </div>
 
         <div class="col-md-6">
+        <div class="row">
+                <div class="col-md-12 holidays">
+                    <!-- BEGIN PORTLET -->
+                    <div class="portlet light boxborder">
+                        <div class="portlet-title tabbable-line">
+                            <div class="caption caption-md">
+                                <i class=" font-green-sharp" aria-hidden="true"></i>
+                                <span class="caption-subject font-green-sharp bold">Approval Center</span>
+                            </div>
+                        </div>
+                        <div title="Today" class="row detailsbox" style="margin-top:6rem; height:18rem;">
+                        <a href="<?php echo $leavePending ?>">
+                            <div  class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div class="employee_details-box hexagon-bg1" >
+                                    <span id="leavePending">0</span> 
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">Leave Pending</div>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="<?php echo $attendPending ?>">
+                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div title="Today" class="employee_details-box hexagon-bg2">
+                                    <span id="attendancePending">0</span>
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">Attendance Pending </div>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="<?php echo $overtimePending ?>">
+                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div title="Today" class="employee_details-box hexagon-bg3">
+                                    <span id="overtimePending">0</span>
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">Overtime Pending</div>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="<?php echo $wohUrl ?>">
+                            <div class="col-xs-6 col-sm-3 col-md-2 hexcustom">
+                                <div title="Today" class="employee_details-box hexagon-bg5">
+                                    <span id="employeeWOHDays">0</span>
+                                    <div class="face1"></div>
+                                    <div class="face2"></div>
+                                    <div class="headtitle">WOH Pending</div>
+                                </div>
+                            </div>
+                        </a>
+                        
+                    </div>
 
+                        
+                    </div>
+                </div>
+
+            </div>
 
             <div class="row">
                 <div class="col-md-12">
@@ -620,7 +722,7 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
                                     <div class="html-loading" style="display:none;height:100%;width:100%;position:absolute;top:0;left:0;"></div>
                                     <ul class="feeds" style="visibility:visible;">
                                         <?php foreach ($upcomingHolidays as $holiday) : ?>
-                                            <li>
+                                            <li style="background-color:<?php echo $holiday['START_DATE']==$currentDate?'#76D1D7 !important;':'none';?>">
                                                 <div class="col-xs-6 col-sm-3 col-md-3 desc holiday-title">
                                                     <span class="label holiday-color  "><?php print $holiday['HOLIDAY_ENAME']; ?></span>
                                                 </div>
@@ -751,4 +853,3 @@ $pendingleaveUrl = $this->url('leavestatus', ['action' => 'index', 'id' => 1]);
     <div class="clearfix"></div>
 
 </div>
-

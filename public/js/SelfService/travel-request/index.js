@@ -10,11 +10,6 @@
                 <a class="btn btn-icon-only green" href="${document.viewLink}/#:TRAVEL_ID#" style="height:17px;" title="View Detail">
                     <i class="fa fa-search"></i>
                 </a>
-                #if(ALLOW_EDIT=='Y'){#
-                <a class="btn btn-icon-only yellow" href="${document.editLink}/#:TRAVEL_ID#" style="height:17px;" title="Edit">
-                    <i class="fa fa-edit"></i>
-                </a>
-                #}#
                 #if(ALLOW_DELETE=='Y' && STATUS!='AP'){#
                 <a  class="btn btn-icon-only red confirmation" href="${document.deleteLink}/#:TRAVEL_ID#" style="height:17px;" title="Cancel">
                     <i class="fa fa-times"></i>
@@ -27,6 +22,11 @@
                 #}#
             </div>
         `;
+       /* #if(ALLOW_EDIT=='Y'){#
+            <a class="btn btn-icon-only yellow" href="${document.editLink}/#:TRAVEL_ID#" style="height:17px;" title="Edit">
+                <i class="fa fa-edit"></i>
+            </a>
+            #}#*/
         app.initializeKendoGrid($table, [
             {title: "Start Date",
                 columns: [{

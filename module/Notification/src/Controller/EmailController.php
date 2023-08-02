@@ -21,9 +21,11 @@ use Notification\Model\WorkOnHolidayNotificationModel;
 use Notification\Repository\EmailTemplateRepo;
 use Zend\Authentication\AuthenticationService;
 use Zend\Db\Adapter\AdapterInterface;
+use Notification\Model\ExpenseReqNotificationModel;
 use Zend\Mvc\Controller\AbstractActionController;
 
-class EmailController extends AbstractActionController {
+class EmailController extends AbstractActionController
+{
 
     private $employeeId;
     private $adapter;
@@ -74,9 +76,13 @@ class EmailController extends AbstractActionController {
         42 => "Leave_Cancel",
         43 => "Leave_Cancel_Recommend",
         44 => "Leave_Cancel_Approve",
+        45 => "Expense_Request",
+        46 => "Expense_Approval",
+        47 => "Expense_Recommendation",
     ];
 
-    private function getVariables() {
+    private function getVariables()
+    {
 
 
         $type1 = new LeaveRequestNotificationModel();
@@ -124,6 +130,9 @@ class EmailController extends AbstractActionController {
         $birthdayWish = new BirthdayNotificationModel();
         $birthdayWishOA = $birthdayWish->getObjectAttrs();
 
+        $type14 = new ExpenseReqNotificationModel();
+        $type14ObjVars = $type14->getObjectAttrs();
+
         return [
             1 => $type1ObjVars,
             2 => $type1ObjVars,
@@ -168,11 +177,15 @@ class EmailController extends AbstractActionController {
             41 => $birthdayWishOA,
             42 => $type1ObjVars,
             43 => $type1ObjVars,
-            44 => $type1ObjVars
+            44 => $type1ObjVars,
+            45 => $type14ObjVars,
+            46 => $type14ObjVars,
+            47 => $type14ObjVars
         ];
     }
 
-    public function __construct(AdapterInterface $adapter) {
+    public function __construct(AdapterInterface $adapter)
+    {
         $this->adapter = $adapter;
         $this->templateRepo = new EmailTemplateRepo($adapter);
 
@@ -180,21 +193,23 @@ class EmailController extends AbstractActionController {
         $this->employeeId = $auth->getStorage()->read()['employee_id'];
     }
 
-    public function indexAction() {
+    public function indexAction()
+    {
         $tab = (int) $this->params()->fromRoute('id');
         if ($tab == 0) {
             $tab = array_keys(self::EMAIL_TYPES)[0];
         }
         $templates = $this->templateRepo->fetchAll();
         return Helper::addFlashMessagesToArray($this, [
-                    'emailTypes' => self::EMAIL_TYPES,
-                    'templates' => $templates,
-                    'tab' => $tab,
-                    'variables' => $this->getVariables()
+            'emailTypes' => self::EMAIL_TYPES,
+            'templates' => $templates,
+            'tab' => $tab,
+            'variables' => $this->getVariables()
         ]);
     }
 
-    public function editAction() {
+    public function editAction()
+    {
         $request = $this->getRequest();
         if ($request->isPost()) {
 
@@ -242,5 +257,4 @@ class EmailController extends AbstractActionController {
             return $this->redirect()->toRoute('email', ['id' => $postedData['id']]);
         }
     }
-
 }

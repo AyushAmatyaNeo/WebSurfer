@@ -26,6 +26,7 @@ use Setup\Controller\ServiceQuestionController;
 use Setup\Controller\ServiceTypeController;
 use Setup\Controller\TrainingController;
 use Setup\Controller\ShiftGroupController;
+use Setup\Controller\LevelController;
 use Zend\Router\Http\Segment;
 
 return [
@@ -103,6 +104,20 @@ return [
                     ],
                     'defaults' => [
                         'controller' => PositionController::class,
+                        'action' => 'index',
+                    ]
+                ],
+            ],
+            'level' => [
+                'type' => segment::class,
+                'options' => [
+                    'route' => '/setup/level[/:action[/:id]]',
+                    'constants' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => LevelController::class,
                         'action' => 'index',
                     ]
                 ],
@@ -504,6 +519,33 @@ return [
                     [
                         'label' => 'Edit',
                         'route' => 'position',
+                        'action' => 'edit',
+                    ],
+                ]
+            ]
+        ],
+        'level' => [
+            [
+                'label' => 'Level',
+                'route' => 'level',
+            ],
+            [
+                'label' => 'Level',
+                'route' => 'level',
+                'pages' => [
+                    [
+                        'label' => 'List',
+                        'route' => 'level',
+                        'action' => 'index',
+                    ],
+                    [
+                        'label' => 'Add',
+                        'route' => 'level',
+                        'action' => 'add',
+                    ],
+                    [
+                        'label' => 'Edit',
+                        'route' => 'level',
                         'action' => 'edit',
                     ],
                 ]
@@ -1026,7 +1068,8 @@ return [
             FunctionalTypesController::class => ControllerFactory::class,
             FunctionalLevelsController::class => ControllerFactory::class,
             FileTypeController::class => ControllerFactory::class,
-            ShiftGroupController::class => ControllerFactory::class
+            ShiftGroupController::class => ControllerFactory::class,
+            LevelController::class=>ControllerFactory::class
         ],
     ],
     'view_manager' => [

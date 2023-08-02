@@ -76,15 +76,18 @@
             
             var selectedYearText=$("#fiscalYearId option:selected" ).text();
             var selectedMonthText=$("#monthId option:selected" ).text();
-            var displayYearMonthtext='Payslip for '+selectedMonthText+' '+selectedYearText;
-            $('#yearMonthDetails').html(displayYearMonthtext);
-            
+         
             var monthId = $month.val();
             var employeeId = $employeeId.val();
             app.serverRequest('', {
                 monthId: monthId,
                 employeeId: employeeId,
             }).then(function (response) {
+                // var displayYearMonthtext='Payslip of '+selectNameText+' for '+selectedMonthText+' '+selectedYearText+'('+response.data['currentMonthDate']['FROM_DATE']+'/'+response.data['currentMonthDate']['TO_DATE']+')';
+                // $('#yearMonthDetails').html(displayYearMonthtext);
+                var displayYearMonthtext='Payslip for '+selectedMonthText+' '+selectedYearText+'('+response.data['currentMonthDate']['FROM_DATE']+'/'+response.data['currentMonthDate']['TO_DATE']+')';
+                $('#yearMonthDetails').html(displayYearMonthtext);
+        
                 showPaySlip(response.data['pay-detail']);
                 showEmpDetail(response.data['emp-detail']);
             }, function (error) {

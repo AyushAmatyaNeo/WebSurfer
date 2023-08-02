@@ -156,7 +156,7 @@ class MonthlyValue extends HrisController {
         $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME]);
         $months = EntityHelper::getTableList($this->adapter, Months::TABLE_NAME, [Months::MONTH_ID, Months::MONTH_EDESC, Months::FISCAL_YEAR_ID]);
         $monthlyValues = EntityHelper::getTableList($this->adapter, MonthlyValueModel::TABLE_NAME, [MonthlyValueModel::MTH_ID, MonthlyValueModel::MTH_EDESC]);
-        $positions = EntityHelper::getTableList($this->adapter, Position::TABLE_NAME, [Position::POSITION_ID, Position::POSITION_NAME, Position::LEVEL_NO]);
+        $positions = EntityHelper::getTableList($this->adapter, Position::TABLE_NAME, [Position::POSITION_ID, Position::POSITION_NAME, Position::LEVEL_NO],["STATUS='E'"],"","LEVEL_NO ASC");
         return Helper::addFlashMessagesToArray($this, [
                     'fiscalYears' => $fiscalYears,
                     'months' => $months,
@@ -268,6 +268,69 @@ class MonthlyValue extends HrisController {
             $errorMSg = $e->getMessage();
             $this->flashmessenger()->addMessage("Error !!" . $errorMSg);
             return $this->redirect()->toRoute("monthlyValue", ["action" => "detail"]);
+        }
+    }
+	
+	public function employeeMonthWiseMonthlyValueAction() {
+        $monthlyValues = EntityHelper::getTableList($this->adapter, MonthlyValueModel::TABLE_NAME, [MonthlyValueModel::MTH_ID, MonthlyValueModel::MTH_EDESC]);
+        $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME]);
+        $months = EntityHelper::getTableList($this->adapter, Months::TABLE_NAME, [Months::MONTH_ID, Months::MONTH_EDESC, Months::FISCAL_YEAR_ID],null,'','FISCAL_YEAR_MONTH_NO');
+        return Helper::addFlashMessagesToArray($this, [
+                    'searchValues' => EntityHelper::getSearchData($this->adapter),
+                    'monthlyValues' => $monthlyValues,
+                    'fiscalYears' => $fiscalYears,
+                    'months' => $months,
+                    'acl' => $this->acl,
+        ]);
+    }
+
+    public function getEmpMonthlyValueDetailAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postedData = $request->getPost();
+            $monthlyValueId = $postedData['monthlyValueId'];
+            $fiscalYearId = $postedData['fiscalYearId'];
+            $monthId = $postedData['monthId'];
+            $employeeFilter = $postedData['employeeFilter'];
+            $pivotString = '';
+            for($i = 0; $i < count($monthlyValueId); $i++){
+                if($i != 0){ $pivotString.=','; }
+                $pivotString.= $monthlyValueId[$i].' AS M_'.$monthlyValueId[$i];
+            }
+            $detailRepo = new MonthlyValueDetailRepo($this->adapter);
+            $result = $detailRepo->getMonthlyValueDetailById($monthId, $fiscalYearId, $pivotString, $employeeFilter);
+            // print_r($result); die;
+            $columns = $detailRepo->getColumns($monthlyValueId);
+            //echo '<pre>'; print_r(Helper::extractDbData($result)); die;
+            return new JsonModel(['success' => true, 'data' => Helper::extractDbData($result), 'error' => '', 'columns' => Helper::extractDbData($columns)]);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function postEmpMonthlyValueDetailAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postedData = $request->getPost();
+            $data = $postedData['data'];
+            $fiscalYearId = $postedData['fiscalYearId'];
+            $monthId = $postedData['monthId'];
+            $detailRepo = new MonthlyValueDetailRepo($this->adapter);
+            foreach($data as $d){
+                if($d['employeeId'] == null || $d['employeeId'] == ''){
+                    continue;
+                }
+                $detailRepo->postMonthlyValueDetailById($d, $fiscalYearId, $monthId);
+            }
+            return new JsonModel(['success' => true, 'error' => '']);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
         }
     }
 

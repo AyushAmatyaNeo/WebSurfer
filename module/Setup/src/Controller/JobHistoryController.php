@@ -282,7 +282,7 @@ class JobHistoryController extends HrisController {
             $startDate = $data['startDate'];
             $employeeId = $data['employeeId'];
 
-            $result = $this->repository->fetchBeforeStartDate(Helper::getExpressionDate($startDate)->getExpression(), $employeeId);
+            $result = $this->repository->fetchBeforeStartDate($startDate, $employeeId);
 
             return new CustomViewModel(['success' => true, 'data' => $result, 'error' => '']);
         } catch (Exception $e) {

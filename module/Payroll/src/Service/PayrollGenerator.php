@@ -57,7 +57,9 @@ class PayrollGenerator {
         "IS_DISABLE_PERSON",
         "PREVIOUS_MONTH_DAYS",
         "BRANCH_ALLOWANCE_REBATE",
-        "IS_REMOTE_BRANCH"
+        "IS_REMOTE_BRANCH",
+		"OPENING_GRADE_QTY",
+        "DEARNESS_ALLOWANCE"
     ];
     const SYSTEM_RULE = [
         "TOTAL_ANNUAL_AMOUNT",
@@ -71,7 +73,8 @@ class PayrollGenerator {
         "EMPLOYEE_GRADE",
         "TOTAL_ADD",
         "TOTAL_DED",
-        "GRATUITY_PER"
+        "GRATUITY_PER",
+		"OPENING_GRADE_QTY"
     ];
 
     public function __construct($adapter) {

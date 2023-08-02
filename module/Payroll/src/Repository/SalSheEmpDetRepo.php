@@ -20,7 +20,8 @@ class SalSheEmpDetRepo extends HrisRepository {
         SSD.*
         ,E.ID_PROVIDENT_FUND_NO
         ,E.ID_PAN_NO
-        ,E.ID_RETIREMENT_NO
+        ,E.ID_RETIREMENT_NO,
+		E.EMPLOYEE_CODE
         FROM HRIS_SALARY_SHEET_EMP_DETAIL SSD
         LEFT JOIN HRIS_EMPLOYEES E ON SSD.EMPLOYEE_ID=E.EMPLOYEE_ID
         WHERE

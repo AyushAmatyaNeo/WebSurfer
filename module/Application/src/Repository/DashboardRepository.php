@@ -88,6 +88,100 @@ FROM HRIS_ATTENDANCE_DETAIL ad
         return $result;
     }
 
+    public function fetchPendingDetail(){
+      $sql="SELECT
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_employee_leave_request
+          WHERE
+              status IN ( 'RQ', 'RC', 'CP', 'CR', 'A2',
+                          'RP', 'A3', 'A4' )
+      ) AS leave_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_attendance_request
+          WHERE
+              status IN ( 'RQ', 'RC', 'CP', 'CR' )
+      ) AS attend_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_overtime_detail
+          WHERE
+              status IN ( 'RQ', 'RC', 'CP', 'CR' )
+      ) AS overtime_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_employee_work_dayoff
+          WHERE
+              status IN ( 'RQ', 'RC', 'CP', 'CR' )
+      ) AS workholiday_count
+    
+        from dual";
+      $statement=$this->adapter->query($sql);
+      $result=$statement->execute()->current();
+      // echo '<pre>';print_r($statement);die;
+      return $result;
+    }
+
+    public function fetchTotalEmployees($employeeId){
+      $sql="SELECT
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_employees
+          WHERE
+                  status = 'E'
+              AND resigned_flag = 'N'
+              AND retired_flag = 'N' 
+      ) AS total_emp,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_attendance_detail
+          WHERE
+              overall_status = 'PR' AND ATTENDANCE_DT=TRUNC(SYSDATE)
+      ) AS present_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_attendance_detail
+          WHERE
+              overall_status = 'AB' AND ATTENDANCE_DT=TRUNC(SYSDATE)
+      ) AS absent_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_attendance_detail
+          WHERE
+              overall_status = 'TV' AND ATTENDANCE_DT=TRUNC(SYSDATE)
+      ) AS travel_count,
+      (
+          SELECT
+              COUNT(*)
+          FROM
+              hris_attendance_detail
+          WHERE
+              overall_status = 'TN' AND ATTENDANCE_DT=TRUNC(SYSDATE)
+      ) AS training_count
+       FROM DUAL
+  ";
+      $statement=$this->adapter->query($sql);
+      $result=$statement->execute()->current();
+      // echo '<pre>';print_r($statement);die;
+      return $result;
+    }
     public function fetchUpcomingHolidays($employeeId = null) {
         if ($employeeId == null) {
             $sql = "SELECT HM.HOLIDAY_ID,
@@ -98,7 +192,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                   TO_CHAR(HM.START_DATE, 'DAY') WEEK_DAY,
                   HM.START_DATE - TRUNC(SYSDATE) DAYS_REMAINING
                 FROM HRIS_HOLIDAY_MASTER_SETUP HM
-                WHERE  HM.START_DATE > TRUNC(SYSDATE) ORDER BY HM.START_DATE";
+                WHERE  HM.START_DATE >= TRUNC(SYSDATE) ORDER BY HM.START_DATE";
         } else {
             $sql = "SELECT HM.HOLIDAY_ID,
                   HM.HOLIDAY_ENAME,
@@ -110,14 +204,22 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                 FROM HRIS_HOLIDAY_MASTER_SETUP HM
                 JOIN HRIS_EMPLOYEE_HOLIDAY EH
                 ON (HM.HOLIDAY_ID   =EH.HOLIDAY_ID)
-                WHERE EH.EMPLOYEE_ID={$employeeId} AND HM.START_DATE > TRUNC(SYSDATE) ORDER BY HM.START_DATE";
+                WHERE EH.EMPLOYEE_ID={$employeeId} AND HM.START_DATE >= TRUNC(SYSDATE) ORDER BY HM.START_DATE";
         }
 
 
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
-
+// echo '<pre>';print_r($result);die;
         return $result;
+    }
+
+    public function fetchCurrentDate(){
+      $sql="select TO_CHAR(trunc(sysdate),'Day, fmddth Month') as today_dt from dual";
+      $statement=$this->adapter->query($sql);
+      $result=$statement->execute()->current();
+      // echo '<pre>';print_r($result['TODAY_DT']);die;
+      return $result['TODAY_DT'];
     }
 
     public function fetchEmployeeNotice($employeeId = null) {
@@ -142,6 +244,13 @@ FROM HRIS_ATTENDANCE_DETAIL ad
         return $result;
     }
 
+    public function fetchdate(){
+      $sql="select ' English Date : '|| to_char(trunc(sysdate),'DAY YYYY-MON-DD') ||  '      Nepali Date:'  ||((BS_DATE(trunc(sysdate)))) as current_date from dual";
+      $statement = $this->adapter->query($sql);
+      $result = $statement->execute()->current();
+      return $result;
+
+    }
     public function fetchEmployeeTask($employeeId) {
         $sql = "SELECT TSK.TASK_ID,
                         ( CASE
@@ -231,6 +340,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
     public function fetchEmployeeCalendarData($employeeId, $startDate, $endDate) {
         $sql = "SELECT TO_CHAR(ATN.ATTENDANCE_DT, 'YYYY-MM-DD') MONTH_DAY,
                   ATN.EMPLOYEE_ID,
+				  ATN.SP_ID,
                   TO_CHAR(ATN.ATTENDANCE_DT, 'YYYY-MM-DD') ATTENDANCE_DT,
                   TO_CHAR(ATN.IN_TIME, 'HH24:MI') IN_TIME,
                   TO_CHAR(ATN.OUT_TIME, 'HH24:MI') OUT_TIME,
@@ -288,9 +398,10 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                       || TMS.TRAINING_NAME
                       ||')'
                       ||LATE_STATUS_DESC(ATN.LATE_STATUS)
-                    WHEN ATN.OVERALL_STATUS ='PR'
-                    THEN 'Present '
-                      ||LATE_STATUS_DESC(ATN.LATE_STATUS)
+                     WHEN ATN.OVERALL_STATUS ='PR' THEN
+                    (CASE WHEN SP_ID IS NOT NULL THEN 
+                    (SELECT SP_EDESC FROM HRIS_SPECIAL_ATTENDANCE_SETUP WHERE ID = ATN.SP_ID) || ''
+                    ELSE 'Present ' || LATE_STATUS_DESC(ATN.LATE_STATUS) END) 
                     WHEN ATN.OVERALL_STATUS ='AB'
                     THEN 'Absent'
                     WHEN ATN.OVERALL_STATUS ='BA'
@@ -398,6 +509,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
            
 ";
         $statement = $this->adapter->query($sql);
+       // echo '<pre>';print_r($statement);die;
         $result = $statement->execute()->current();
         return $result;
     }
@@ -440,6 +552,8 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                    WHERE HE.GENDER_ID(+) = HG.GENDER_ID
                      AND HG.STATUS = 'E'
                      AND HE.RETIRED_FLAG = 'N'
+		             AND HE.STATUS = 'E'
+
                      --AND HE.COMPANY_ID = :V_COMPANY_ID
                 GROUP BY HE.GENDER_ID, HG.GENDER_NAME
                 ORDER BY UPPER(HG.GENDER_NAME)";
@@ -466,20 +580,51 @@ FROM HRIS_ATTENDANCE_DETAIL ad
         return $result;
     }
 
-    public function fetchLocationHeadCount() {
-        $sql = "SELECT COUNT (*) HEAD_COUNT, HB.BRANCH_ID , HB.BRANCH_NAME
-                    FROM HRIS_EMPLOYEES HE, HRIS_BRANCHES HB
-                   WHERE HE.BRANCH_ID(+) = HB.BRANCH_ID
-                   AND HB.STATUS = 'E'
-                   AND HE.RETIRED_FLAG = 'N'
-                   --AND HE.COMPANY_ID = :V_COMPANY_ID
-                GROUP BY HB.BRANCH_ID, HB.BRANCH_NAME
-                ORDER BY UPPER(HB.BRANCH_NAME)";
+    // public function fetchLocationHeadCount() {
+    //     $sql = "SELECT COUNT (*) HEAD_COUNT, HB.BRANCH_ID , HB.BRANCH_NAME
+    //                 FROM HRIS_EMPLOYEES HE, HRIS_BRANCHES HB
+    //                WHERE HE.BRANCH_ID(+) = HB.BRANCH_ID
+    //                AND HB.STATUS = 'E'
+    //                AND HE.RETIRED_FLAG = 'N'
+    //                --AND HE.COMPANY_ID = :V_COMPANY_ID
+    //             GROUP BY HB.BRANCH_ID, HB.BRANCH_NAME
+    //             ORDER BY UPPER(HB.BRANCH_NAME)";
 
-        $statement = $this->adapter->query($sql);
-        $result = $statement->execute();
+    //     $statement = $this->adapter->query($sql);
+    //     // echo '<pre>';print_r($statement);die;
+    //     $result = $statement->execute();
 
-        return $result;
+    //     return $result;
+    // }
+
+    public function fetchLocationHeadCount(){
+      $sql="SELECT COUNT (*) HEAD_COUNT,
+      EMPLOYEE_TYPE ,
+      ( CASE
+     WHEN employee_type = 'R' THEN
+         'Regular'
+     WHEN employee_type = 'P' THEN
+         'Part Time'
+     WHEN employee_type = 'I' THEN
+         'Intern'
+     WHEN employee_type = 'C' THEN
+         'Contract'
+     WHEN employee_type = 'B' THEN
+         'Time Bound' 
+      WHEN employee_type = 'T' THEN
+         'Trainee'else
+       'Outsourced Employee' END) as Employee_Id
+       FROM HRIS_EMPLOYEES
+ WHERE
+         status = 'E'
+     AND retired_flag = 'N'
+         AND resigned_flag = 'N'
+ GROUP BY
+     employee_type";
+    $statement=$this->adapter->query($sql);
+    $result=$statement->execute();
+                // echo '<pre>';print_r($result);die;
+    return $result;
     }
 
     public function fetchDepartmentAttendance() {
@@ -531,42 +676,42 @@ FROM HRIS_ATTENDANCE_DETAIL ad
 
     public function fetchEmployeeContracts() {
         $sql = "
-                SELECT EMP.EMPLOYEE_ID,
-                  EMP.FULL_NAME,
-                  EF.FILE_PATH,
-                  D.DESIGNATION_TITLE,
-                  S.END_DATE,
-                  S.TYPE
-                FROM HRIS_EMPLOYEES EMP
-                JOIN
-                  (SELECT JH.EMPLOYEE_ID,
-                    TO_CHAR(JH.START_DATE,'DD-MON-YYYY') AS START_DATE,
-                    TO_CHAR(JH.END_DATE,'DD-MON-YYYY') AS END_DATE,
-                    JH.TO_DEPARTMENT_ID,
-                    JH.TO_DESIGNATION_ID,
-                    (
-                    CASE
-                      WHEN TRUNC(SYSDATE) > JH.END_DATE
-                      THEN 'EXPIRED'
-                      ELSE 'EXPIRING'
-                    END ) AS TYPE
-                  FROM HRIS_JOB_HISTORY JH,
-                    (SELECT EMPLOYEE_ID,
-                      MAX(START_DATE) AS LATEST_START_DATE
-                    FROM HRIS_JOB_HISTORY
-                    WHERE END_DATE IS NOT NULL
-                    AND ABS(TRUNC(END_DATE)-TRUNC(SYSDATE))<=15
-                    GROUP BY EMPLOYEE_ID
-                    ) LH
-                  WHERE JH.EMPLOYEE_ID =LH.EMPLOYEE_ID
-                  AND JH.START_DATE    = LH.LATEST_START_DATE
-                  ) S
-                ON (EMP.EMPLOYEE_ID=S.EMPLOYEE_ID)
-                LEFT JOIN HRIS_EMPLOYEE_FILE EF
-                ON (EMP.PROFILE_PICTURE_ID=EF.FILE_CODE)
-                LEFT JOIN HRIS_DESIGNATIONS D
-                ON (S.TO_DESIGNATION_ID=D.DESIGNATION_ID )
-                ORDER BY S.END_DATE ASC
+        SELECT EMP.EMPLOYEE_ID,
+        EMP.FULL_NAME,
+        EF.FILE_PATH,
+        D.DESIGNATION_TITLE,
+        S.END_DATE,
+        S.TYPE
+      FROM HRIS_EMPLOYEES EMP
+      JOIN
+        (SELECT JH.EMPLOYEE_ID,
+          TO_CHAR(JH.START_DATE,'DD-MON-YYYY') AS START_DATE,
+          TO_CHAR(JH.END_DATE,'DD-MON-YYYY') AS END_DATE,
+          JH.TO_DEPARTMENT_ID,
+          JH.TO_DESIGNATION_ID,
+          (
+          CASE
+            WHEN TRUNC(SYSDATE) > JH.END_DATE
+            THEN 'EXPIRED'
+            ELSE 'EXPIRING'
+          END ) AS TYPE
+        FROM HRIS_JOB_HISTORY JH,
+          (SELECT EMPLOYEE_ID,
+            MAX(START_DATE) AS LATEST_START_DATE
+          FROM HRIS_JOB_HISTORY
+          WHERE END_DATE IS NOT NULL
+          AND ABS(TRUNC(END_DATE)-TRUNC(SYSDATE))<=30
+          GROUP BY EMPLOYEE_ID
+          ) LH
+        WHERE JH.EMPLOYEE_ID =LH.EMPLOYEE_ID
+        AND JH.START_DATE    = LH.LATEST_START_DATE
+        ) S
+      ON (EMP.EMPLOYEE_ID=S.EMPLOYEE_ID)
+      LEFT JOIN HRIS_EMPLOYEE_FILE EF
+      ON (EMP.PROFILE_PICTURE_ID=EF.FILE_CODE)
+      LEFT JOIN HRIS_DESIGNATIONS D
+      ON (S.TO_DESIGNATION_ID=D.DESIGNATION_ID )
+      ORDER BY S.END_DATE ASC
                 ";
 
 
@@ -591,6 +736,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                 SELECT E.FULL_NAME,
                   EF.FILE_PATH,
                   B.BRANCH_NAME,
+				  DA.DEPARTMENT_NAME,
                   P.POSITION_NAME,
                   D.DESIGNATION_TITLE,
                   E.JOIN_DATE
@@ -601,6 +747,8 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                 ON (E.DESIGNATION_ID=D.DESIGNATION_ID )
                 LEFT JOIN HRIS_BRANCHES B
                 ON (E.BRANCH_ID=B.BRANCH_ID)
+				LEFT JOIN HRIS_DEPARTMENTS DA 
+				ON (DA.DEPARTMENT_ID=E.DEPARTMENT_ID)
                 LEFT JOIN HRIS_POSITIONS P
                 ON (E.POSITION_ID=P.POSITION_ID),
                   (SELECT *
@@ -611,6 +759,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                     ";
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();
+		
         return $result;
     }
 
@@ -620,6 +769,7 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                   EF.FILE_PATH,
                   B.BRANCH_NAME,
                   P.POSITION_NAME,
+				  DA.DEPARTMENT_NAME,
                   D.DESIGNATION_TITLE,
                   R.EXIT_DATE,
                   E.JOIN_DATE
@@ -630,6 +780,8 @@ FROM HRIS_ATTENDANCE_DETAIL ad
                 ON (E.DESIGNATION_ID=D.DESIGNATION_ID )
                 LEFT JOIN HRIS_BRANCHES B
                 ON (E.BRANCH_ID=B.BRANCH_ID)
+				LEFT JOIN HRIS_DEPARTMENTS DA 
+				ON (DA.DEPARTMENT_ID=E.DEPARTMENT_ID)
                 LEFT JOIN HRIS_POSITIONS P
                 ON (E.POSITION_ID=P.POSITION_ID),
                   (SELECT JH.EMPLOYEE_ID,
@@ -795,7 +947,7 @@ LEFT JOIN HRIS_LEAVE_MASTER_SETUP LMS ON (LMS.LEAVE_ID=AD.LEAVE_ID)
 LEFT JOIN HRIS_EMPLOYEE_LEAVE_REQUEST LR ON (LR.EMPLOYEE_ID=AD.EMPLOYEE_ID AND TRUNC(SYSDATE) BETWEEN LR.START_DATE AND LR.END_DATE )
 LEFT JOIN HRIS_BRANCHES B ON (B.BRANCH_ID=E.BRANCH_ID)
 WHERE AD.ATTENDANCE_DT=TRUNC(SYSDATE)
-AND AD.OVERALL_STATUS='LV'
+AND AD.OVERALL_STATUS='LV'  AND LR.STATUS = 'AP'
 --AND E.COMPANY_ID={$companyId}";
         $statement = $this->adapter->query($sql);
         $result = $statement->execute();

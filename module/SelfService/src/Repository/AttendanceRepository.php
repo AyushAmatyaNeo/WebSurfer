@@ -277,9 +277,10 @@ class AttendanceRepository implements RepositoryInterface {
                       ||T.TRAINING_NAME
                       ||')'
                       ||LATE_STATUS_DESC(A.LATE_STATUS)
-                    WHEN A.OVERALL_STATUS ='PR'
-                    THEN 'Present'
-                      ||LATE_STATUS_DESC(A.LATE_STATUS)
+                     WHEN A.OVERALL_STATUS ='PR' THEN
+                    (CASE WHEN SP_ID IS NOT NULL THEN 
+                    (SELECT SP_EDESC FROM HRIS_SPECIAL_ATTENDANCE_SETUP WHERE ID = A.SP_ID) || ''
+                    ELSE 'Present ' ||LATE_STATUS_DESC(A.LATE_STATUS) END) 
                     WHEN A.OVERALL_STATUS ='AB'
                     THEN 'Absent'
                     WHEN A.OVERALL_STATUS ='BA'

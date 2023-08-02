@@ -123,7 +123,7 @@ class RegisterAttendanceController extends AbstractActionController {
                         $inTime = $todayAttendance['IN_TIME'];
                         $halfDayFlag = $todayAttendance['HALFDAY_FLAG'];
                         $attendanceType = ($inTime) ? "OUT" : "IN";
-                        $shiftDetails = $attendanceDetailRepo->fetchEmployeeShfitDetails($employeeId);
+                        $shiftDetails = $attendanceDetailRepo->fetchEmpShiftDtlByAttendance($employeeId);
                         if (!$shiftDetails) {
                             $shiftDetails = $attendanceDetailRepo->fetchEmployeeDefaultShift($employeeId);
                         }
@@ -177,7 +177,7 @@ class RegisterAttendanceController extends AbstractActionController {
         $attendanceDetailRepo = new AttendanceDetailRepository($this->adapter);
         $todayAttendance = $attendanceDetailRepo->fetchByEmpIdAttendanceDT($employeeId, 'TRUNC(SYSDATE)');
 
-        $shiftDetails = $attendanceDetailRepo->fetchEmployeeShfitDetails($employeeId);
+        $shiftDetails = $attendanceDetailRepo->fetchEmpShiftDtlByAttendance($employeeId);
         if (!$shiftDetails) {
             $shiftDetails = $attendanceDetailRepo->fetchEmployeeDefaultShift($employeeId);
         }
@@ -208,7 +208,7 @@ class RegisterAttendanceController extends AbstractActionController {
         $employeeId = $this->storage->read()['employee_id'];
 
         $attendanceDetailRepo = new AttendanceDetailRepository($this->adapter);
-        $shiftDetails = $attendanceDetailRepo->fetchEmployeeShfitDetails($employeeId);
+        $shiftDetails = $attendanceDetailRepo->fetchEmpShiftDtlByAttendance($employeeId);
         if (!$shiftDetails) {
             $shiftDetails = $attendanceDetailRepo->fetchEmployeeDefaultShift();
         }

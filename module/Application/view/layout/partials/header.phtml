@@ -110,7 +110,7 @@
                             <?php endif; ?>
                             <?php if ($allowRegisterAttendance) { ?>
                                 <li>
-                                    <a href="<?php echo $this->url('registerAttendance', ['action' => 'checkout']); ?>">
+                                    <a href="<?= $this->url('registerAttendance'); ?>">
                                         <i class="icon-login"></i>Check <?= ($registerAttendance == 'OUT') ? 'Out' : 'In' ?> </a>
                                 </li>
                             <?php } ?>

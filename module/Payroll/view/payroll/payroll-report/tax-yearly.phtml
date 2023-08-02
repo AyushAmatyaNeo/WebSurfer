@@ -9,8 +9,10 @@ $this->headScript()
         ->appendFile($this->basePath('js/search.js'))
         ->appendFile($this->basePath('js/mustache.js'))
         ->appendFile($this->basePath('assets/global/plugins/jsPDF-master/dist/jspdf.debug.js'))
-        ->appendFile($this->basePath('js/Payroll/payrollReport/taxYearly.js'));
+        ->appendFile($this->basePath('js/Payroll/payrollReport/taxYearly.js'))
+		->appendFile($this->basePath('js/jquery.table2excel.js'));
 ?>
+
 
 <?php if ($this->messages) { ?>
     <script>

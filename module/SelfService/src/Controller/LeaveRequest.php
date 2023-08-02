@@ -170,14 +170,15 @@ class LeaveRequest extends HrisController {
             $subLeaveMaxDays = $this->preference['subLeaveMaxDays'];
         }
         $selfBranch="branch_id=(select branch_id from hris_employees where employee_id=".$this->employeeId.")";
-//        echo $subLeaveReference;
-//        die();
+        
+        $selfDepartment = "department_id=(select department_id from hris_employees where employee_id=".$this->employeeId.")";
+
         return Helper::addFlashMessagesToArray($this, [
                     'form' => $this->form,
                     'employeeId' => $this->employeeId,
                     'leave' => $this->repository->getLeaveList($this->employeeId,'Y'),
                     'customRenderer' => Helper::renderCustomView(),
-                    'employeeList' => EntityHelper::getTableKVListWithSortOption($this->adapter, HrEmployees::TABLE_NAME, HrEmployees::EMPLOYEE_ID, [HrEmployees::FIRST_NAME, HrEmployees::MIDDLE_NAME, HrEmployees::LAST_NAME], [HrEmployees::STATUS => "E", HrEmployees::RETIRED_FLAG => "N"], HrEmployees::FIRST_NAME, "ASC", " ", false, true),
+                    'employeeList' => EntityHelper::getTableKVListWithSortOption($this->adapter, HrEmployees::TABLE_NAME, HrEmployees::EMPLOYEE_ID, [HrEmployees::FIRST_NAME, HrEmployees::MIDDLE_NAME, HrEmployees::LAST_NAME], [HrEmployees::STATUS => "E", HrEmployees::RETIRED_FLAG => "N", $selfDepartment, $selfBranch], HrEmployees::FIRST_NAME, "ASC", " ", false, true),
                     'subLeaveReference' => $subLeaveReference,
                     'subLeaveMaxDays' => $subLeaveMaxDays
         ]);

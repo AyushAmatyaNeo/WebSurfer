@@ -13,6 +13,7 @@ use Payroll\Repository\PayrollRepository;
 use Payroll\Repository\RulesRepository;
 use Payroll\Repository\SalarySheetDetailRepo;
 use Payroll\Repository\SalarySheetRepo;
+use Payroll\Repository\SalSheEmpDetRepo;
 use Payroll\Repository\SSPayValueModifiedRepo;
 use Payroll\Repository\TaxSheetRepo;
 use Payroll\Service\PayrollGenerator;
@@ -73,7 +74,7 @@ class SalarySheetController extends HrisController {
 //            $salarySheetList = array_merge($salarySheetList, $salarySheet);
 //        }
         $salarySheetList=$salarySheetController->viewSalarySheetByGroupSheet($monthId,$groupId,$sheetNo,$salaryTypeId);
-
+//print_r($salarySheetList);die;
         return new JsonModel(['success' => true, 'data' => $salarySheetList, 'error' => '']);
     }
 
@@ -281,7 +282,10 @@ class SalarySheetController extends HrisController {
             try {
                 $postedData = $request->getPost();
                 $salarySheetDetailRepo = new SalarySheetDetailRepo($this->adapter);
-                $data = $salarySheetDetailRepo->fetchEmployeePaySlip($postedData['monthId'], $postedData['employeeId'],$postedData['salaryTypeId']);
+				$salSheEmpDetRepo = new SalSheEmpDetRepo($this->adapter);
+				$data['currentMonthDate']=$salarySheetDetailRepo->fetchcurrentMonthDate($postedData['monthId']);
+                $data['pay-detail'] = $salarySheetDetailRepo->fetchEmployeePaySlip($postedData['monthId'], $postedData['employeeId'],$postedData['salaryTypeId']);
+				$data['emp-detail'] = $salSheEmpDetRepo->fetchOneByWithEmpDetails($postedData['monthId'], $postedData['employeeId']);
                 return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
             } catch (Exception $e) {
                 return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
@@ -371,6 +375,7 @@ class SalarySheetController extends HrisController {
             }
             
             $employeeList=$this->salarySheetRepo->fetchEmployeeByGroup($monthId,$valuesinCSV,$salaryTypeId);
+            // echo '<pre>';print_r($employeeList);die;
             $sheetList=$this->salarySheetRepo->fetchGeneratedSheetByGroup($monthId,$valuesinCSV,$salaryTypeId);
 
             return new JsonModel(['success' => true, 'data' => $employeeList, 'sheetData' => $sheetList, 'message' => null]);
@@ -483,6 +488,63 @@ class SalarySheetController extends HrisController {
                     continue;
                 }
                 $detailRepo->setModifiedPayValue($item, $monthId, $salaryTypeId);
+            }
+            return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function payValueModifiedEmployeeWiseAction() {
+        $data['getSearchDataLink'] = $this->url()->fromRoute('salarySheet', ['action' => 'getSearchData']);
+        $data['getGroupListLink'] = $this->url()->fromRoute('salarySheet', ['action' => 'getGroupList']);
+        $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME]);
+        $payrollRepo = new PayrollRepository($this->adapter);
+        $employeeList = $payrollRepo->fetchEmployeeList();
+        $months = EntityHelper::getTableList($this->adapter, Months::TABLE_NAME, [Months::MONTH_ID, Months::MONTH_EDESC, Months::FISCAL_YEAR_ID],null,'','FISCAL_YEAR_MONTH_NO');
+        $rulesRepo = new RulesRepository($this->adapter);
+        $payHeads = $rulesRepo->fetchSSRules();
+        
+        return $this->stickFlashMessagesTo([
+            'payHeads' => $payHeads,
+            'fiscalYears' => $fiscalYears,
+            'months' => $months,
+            'data' => $data,
+            'salaryTypes' => iterator_to_array($this->salarySheetRepo->fetchAllSalaryType(), false),
+            'employees' => $employeeList,
+            'acl' => $this->acl 
+        ]);
+    }
+
+    public function getPayValueDetailEmployeeWiseAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postData = $request->getPost();
+            $sspvmRepo = new SSPayValueModifiedRepo($this->adapter);
+            $data = $sspvmRepo->modernFilterEmployeeWise($postData['monthId'], $postData['payHeadId'], $postData['employeeId'], $postData['salaryTypeId']);
+            return new JsonModel(['success' => true, 'data' => Helper::extractDbData($data),     'error' => '']);
+        } catch (Exception $e) {
+            return new JsonModel(['success' => false, 'data' => [], 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function postPayValueDetailEmployeeWiseAction() {
+        try {
+            $request = $this->getRequest();
+            if (!$request->isPost()) {
+                throw new Exception("The request should be of type post");
+            }
+            $postedData = $request->getPost();
+            $data = $postedData['data'];
+            $monthId = $_POST['monthId'];
+            $employeeId = $_POST['employeeId'];
+            $salaryTypeId = $_POST['salaryTypeId'];
+            $detailRepo = new SSPayValueModifiedRepo($this->adapter);
+            foreach($data as $item){
+                $detailRepo->setModifiedPayValueEmployeeWise($item, $monthId, $salaryTypeId, $employeeId);
             }
             return new JsonModel(['success' => true, 'data' => $data, 'error' => '']);
         } catch (Exception $e) {

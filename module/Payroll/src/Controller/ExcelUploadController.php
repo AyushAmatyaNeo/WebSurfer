@@ -28,12 +28,13 @@ class ExcelUploadController extends HrisController {
     }
 
     public function indexAction() {
-        $flatValues = EntityHelper::getTableList($this->adapter, FlatValueModel::TABLE_NAME, [FlatValueModel::FLAT_ID, FlatValueModel::FLAT_EDESC], [FlatValueModel::STATUS => EntityHelper::STATUS_ENABLED, FlatValueModel::ASSIGN_TYPE => 'E']);
-        $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME]);
+        $flatValues = EntityHelper::getTableList($this->adapter, FlatValueModel::TABLE_NAME, [FlatValueModel::FLAT_ID, FlatValueModel::FLAT_EDESC], [FlatValueModel::STATUS => EntityHelper::STATUS_ENABLED]);
+        $fiscalYears = EntityHelper::getTableList($this->adapter, FiscalYear::TABLE_NAME, [FiscalYear::FISCAL_YEAR_ID, FiscalYear::FISCAL_YEAR_NAME],null,"","FISCAL_YEAR_ID DESC");
         $monthlyValues = EntityHelper::getTableList($this->adapter, MonthlyValueModel::TABLE_NAME, [MonthlyValueModel::MTH_ID, MonthlyValueModel::MTH_EDESC]);
         $payValues = EntityHelper::getTableList($this->adapter, PaySetupModel::TABLE_NAME, [PaySetupModel::PAY_ID, PaySetupModel::PAY_EDESC]);
         $months = EntityHelper::getTableList($this->adapter, Months::TABLE_NAME, [Months::MONTH_ID, Months::MONTH_EDESC, Months::FISCAL_YEAR_ID],null,'','FISCAL_YEAR_MONTH_NO');
         $salaryTypes = Helper::extractDbData($this->repository->getSalaryTypes());
+        $maxFiscalYear=EntityHelper::rawQueryResult($this->adapter, "select max(FISCAL_YEAR_ID) as MAX_FISCAL_YEAR_ID from HRIS_FISCAL_YEARS")->current();
         return $this->stickFlashMessagesTo([
                     'searchValues' => EntityHelper::getSearchData($this->adapter),
                     'flatValues' => $flatValues,
@@ -43,6 +44,7 @@ class ExcelUploadController extends HrisController {
                     'salaryTypes' => $salaryTypes,
                     'months' => $months,
                     'acl' => $this->acl,
+                    'maxFiscalYearId' => $maxFiscalYear['MAX_FISCAL_YEAR_ID'],
         ]);
     }
 
@@ -126,6 +128,30 @@ class ExcelUploadController extends HrisController {
         return $this->stickFlashMessagesTo([
             'searchValues' => EntityHelper::getSearchData($this->adapter),
             'acl' => $this->acl
+        ]);
+    }
+	
+	public function employeeAttributesAction(){
+         $attributes = [
+            // "EMPLOYEE_CODE" => "Employee Code",
+            "SENIORITY_LEVEL" => "Seniority Level",
+            "SALARY" => "Salary"
+        ];
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            $excelData = $_POST['data'];
+            $basedOn = $_POST['basedOn'];
+            $col = $_POST['attribute'];
+            foreach ($excelData as $data) {
+                if($data['A'] == null || $data['A'] == ''){ continue; }
+                $this->repository->updateAttribute($data['A'], $col, $data['C'], $basedOn);
+            }
+            return new JsonModel(['success' => true, 'error' => '']);
+        }
+        return $this->stickFlashMessagesTo([
+            'searchValues' => EntityHelper::getSearchData($this->adapter),
+            'acl' => $this->acl,
+            'attributes' => $attributes
         ]);
     }
 }

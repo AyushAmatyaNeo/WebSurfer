@@ -360,6 +360,21 @@ end as GRATUTITY_PERCENT
         $resultList = $this->rawQuery($sql, $boundedParameter);
         return $resultList[0]['GRATUTITY_PERCENT'];
     }
+
+
+    public function fetchcurrentMonthDate($monthId){
+        $sql="SELECT
+        from_date,
+        to_date
+    FROM
+        hris_month_code
+    WHERE
+            month_id = $monthId
+        AND status = 'E'";
+        $statement = $this->adapter->query($sql);
+        $data=$statement->execute();
+        return $data->current();
+    }
     
     
 
