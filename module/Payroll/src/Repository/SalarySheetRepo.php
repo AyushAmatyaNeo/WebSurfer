@@ -95,6 +95,16 @@ class SalarySheetRepo extends HrisRepository
                         END;", $boundedParameter);
     }
 
+    public function updateAdvancePaymentFlag($employeeId, $sheetNo)
+    {
+        $boundedParameter = [];
+        $boundedParameter['sheetNo'] = $sheetNo;
+        $boundedParameter['employeeId'] = $employeeId;
+        $this->executeStatement("BEGIN
+        hris_advance_payment_flag(:employeeId,:sheetNo);
+                        END;", $boundedParameter);
+    }
+
     public function fetchAllSalaryType()
     {
         $sql = new Sql($this->adapter);
