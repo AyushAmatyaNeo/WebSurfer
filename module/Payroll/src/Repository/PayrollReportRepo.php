@@ -1376,7 +1376,7 @@ from hris_variance
         left join Hris_Salary_Sheet_Emp_Detail SSED on (SSED.company_id=hss.company_id and SSED.sheet_no=hss.sheet_no and SSED.month_id=hss.month_id)
         where  hss.month_id = {$data['monthId']}
         and he.bank_id = {$data['bankTypeId']}
-        and hssd.pay_id = 139
+        and hssd.pay_id (select pay_id  from hris_pay_setup where pay_code='NTS')
         {$strSalaryType} {$companyConditionNew}
 		 order by he.full_name
              ";
@@ -1394,7 +1394,7 @@ from hris_variance
         left join hris_fiscal_years hfy on (hfy.fiscal_year_id = hmc.fiscal_year_id)
         where  hss.month_id = {$data['monthId']}
         and he.bank_id = {$data['bankTypeId']}
-        and hssd.pay_id = 139
+        and hssd.pay_id in (select pay_id  from hris_pay_setup where pay_code='NTS')
         {$strSalaryType}
 		 order by he.full_name
              ";
